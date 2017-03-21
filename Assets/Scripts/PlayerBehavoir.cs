@@ -6,10 +6,10 @@ using UnityEngine.UI;
 
 public class PlayerBehavoir : MonoBehaviour
 {
-    private int asteroidsondeath = 999999999, PlayerHealth = 3, HighScore = 0, FireReps = 0, RunScore;
-    private GameObject EndUI, LifeUI, Score, Barrel, SplashText, AsteroidHit;
+    private int asteroidsondeath = 999999999, PlayerHealth = 3, HighScore = 0, FireReps = 0, RunScore, count;
+    private GameObject EndUI, LifeUI, Score, Barrel, SplashText, AsteroidHit, InstructionsUI;
     public GameObject BulletPrefab; // assign in inspector
-    private float BulletSize = 1, ShotSpeed = 0.275f, BulletVelocityModifier = 1, ShotCDTimer = 0 ,repeats = 0;
+    private float BulletSize = 1, ShotSpeed = 0.275f, BulletVelocityModifier = 1, ShotCDTimer = 0, repeats = 0, UIY = 0;
     private bool InvincibilityFrames = false, TripleShot = false;
     private string SplashString = string.Empty;
 
@@ -17,11 +17,14 @@ public class PlayerBehavoir : MonoBehaviour
     {
         LifeUI = GameObject.FindGameObjectWithTag("LifeUI"); //finding game objects and assigning their references
         EndUI = GameObject.FindGameObjectWithTag("EndUI");
+        InstructionsUI = GameObject.FindGameObjectWithTag("InstructionsUI");
         Score = GameObject.FindGameObjectWithTag("Score");
         Barrel = GameObject.FindGameObjectWithTag("Barrel");
         SplashText = GameObject.FindGameObjectWithTag("SplashText");
         EndUI.GetComponent<Text>().text = string.Empty; //initialised as blank to get rid of the filler text
         HighScore = PlayerPrefs.GetInt("highscore"); //playerprefs persist through scene reloads
+        InvokeRepeating("Counter", 0, 1);
+        UIY = InstructionsUI.transform.position.y;
         }
 
     void Update()
@@ -29,7 +32,11 @@ public class PlayerBehavoir : MonoBehaviour
         if (Input.GetKey(KeyCode.Escape))  Application.Quit();
         ShotCDTimer += Time.deltaTime; //shotspeed incrememnt
         LifeUI.GetComponent<Text>().text = "Health : " + PlayerHealth; //displays
-        SplashText.GetComponent<Text>().text = SplashString;
+        SplashText.GetComponent<Text>().text = SplashString;    
+        if (count > 25)
+        {
+            InstructionsUI.transform.position = Vector3.MoveTowards(InstructionsUI.transform.position, new Vector3(InstructionsUI.transform.position.x, UIY + 50, InstructionsUI.transform.position.z), 5 * Time.deltaTime);
+        }
         if (IsPlayerDead() == true) //do the end game ui's
         {
             NewHighScore();
@@ -262,5 +269,10 @@ public class PlayerBehavoir : MonoBehaviour
             GetComponent<AsteroidBehavoir>().SetList("Asteroid", newlist);
             Destroy(AsteroidHit, 0);
         }
+    }
+    private void Counter()
+    {
+        count++;
+        if(count > 32) CancelInvoke("Counter");
     }
 }
