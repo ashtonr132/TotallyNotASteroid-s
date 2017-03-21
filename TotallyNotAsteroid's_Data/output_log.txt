@@ -14,7 +14,7 @@ Platform assembly: C:\Users\rob\Desktop\TotallyNotASteroid-s\TotallyNotAsteroid'
 Loading C:\Users\rob\Desktop\TotallyNotASteroid-s\TotallyNotAsteroid's_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
 Platform assembly: C:\Users\rob\Desktop\TotallyNotASteroid-s\TotallyNotAsteroid's_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
 Loading C:\Users\rob\Desktop\TotallyNotASteroid-s\TotallyNotAsteroid's_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
-- Completed reload, in  0.206 seconds
+- Completed reload, in  0.220 seconds
 Platform assembly: C:\Users\rob\Desktop\TotallyNotASteroid-s\TotallyNotAsteroid's_Data\Managed\System.Core.dll (this message is harmless)
 Platform assembly: C:\Users\rob\Desktop\TotallyNotASteroid-s\TotallyNotAsteroid's_Data\Managed\System.dll (this message is harmless)
 desktop: 1600x900 60Hz; virtual: 1600x900 at 0,0
