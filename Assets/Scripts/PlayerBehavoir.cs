@@ -1,14 +1,15 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class PlayerBehavoir : MonoBehaviour
 {
-    private int PlayerHealth = 3, HighScore = 0, FireReps = 0, RunScore;
-    private GameObject EndUI, LifeUI, Score, Barrel, SplashText;
+    private int asteroidsondeath = 999999999, PlayerHealth = 3, HighScore = 0, FireReps = 0, RunScore;
+    private GameObject EndUI, LifeUI, Score, Barrel, SplashText, AsteroidHit;
     public GameObject BulletPrefab; // assign in inspector
-    private float BulletSize = 1, ShotSpeed = 0.275f, BulletVelocityModifier = 1, ShotCDTimer = 0;
+    private float BulletSize = 1, ShotSpeed = 0.275f, BulletVelocityModifier = 1, ShotCDTimer = 0 ,repeats = 0;
     private bool InvincibilityFrames = false, TripleShot = false;
     private string SplashString = string.Empty;
 
@@ -44,16 +45,18 @@ public class PlayerBehavoir : MonoBehaviour
 
     void OnCollisionEnter(Collision col)
     {
-        col.gameObject.GetComponent<Rigidbody>().velocity = -col.gameObject.GetComponent<Rigidbody>().velocity * 1.25f; //Bounce away with force, makes GO getting stuck less likely
+        col.gameObject.GetComponent<Rigidbody>().velocity = -col.gameObject.GetComponent<Rigidbody>().velocity * 1.35f; //Bounce away with force, makes GO getting stuck less likely
         if (col.gameObject.tag == "Asteroid" && InvincibilityFrames == false)
         {
             PlayerHealth--;
+            AsteroidHit = col.gameObject;
+            InvokeRepeating("DoneDamage", 0, 1);
             StartCoroutine(WaitFor(0.5f, "InvincibilityFrames"));
             foreach (GameObject Asteroid in GetComponent<AsteroidBehavoir>().GetList("Asteroid"))
             {
                if (Asteroid != null) //stops npe's when GO is deleted from list (shouldn't be needed as lists are edited correctly, but still trips)
                 {
-                    if (GetComponent<AsteroidBehavoir>().DistanceBetween(GetComponent<Rigidbody>().transform.position, Asteroid.GetComponent<Rigidbody>().transform.position) >= 2)
+                    if (GetComponent<AsteroidBehavoir>().DistanceBetween(GetComponent<Rigidbody>().transform.position, Asteroid.GetComponent<Rigidbody>().transform.position) >= 1.5)
                         col.gameObject.GetComponent<Rigidbody>().velocity = transform.position - Vector3.forward * Time.deltaTime; //an asteroid is within outering collider so force it out
                 }
             }
@@ -167,8 +170,12 @@ public class PlayerBehavoir : MonoBehaviour
 
     void PlayEndScreen() //display end info and start reset scene countdown
     {
+        if (asteroidsondeath == 999999999)
+        {
+            asteroidsondeath = gameObject.GetComponent<AsteroidBehavoir>().GetEvadedAsteroids();
+        }
         EndUI.GetComponent<Text>().text = "Score : " + RunScore + System.Environment.NewLine + "Session HighScore : " +
-         HighScore + System.Environment.NewLine + "Asteroids Cleared : " + gameObject.GetComponent<AsteroidBehavoir>().GetEvadedAsteroids();
+         HighScore + System.Environment.NewLine + "Asteroids Cleared : " + asteroidsondeath;
         LifeUI.SetActive(false); Score.SetActive(false);
         StartCoroutine(WaitFor(10, "ResetScene"));
     }
@@ -231,5 +238,29 @@ public class PlayerBehavoir : MonoBehaviour
         bullet.GetComponent<Rigidbody>().velocity = bullet.transform.right * 30 * BulletVelocityModifier;
         bullet.transform.localScale = Vector3.one * BulletSize / 4;
         Destroy(bullet, 7.5f);
+    }
+    public bool GetIsInvincible()
+    {
+        return InvincibilityFrames;
+    }
+    private void DoneDamage()
+    {
+        repeats++;
+        if (repeats < 6)
+        {
+            AsteroidHit.GetComponent<Rigidbody>().isKinematic = true;
+            AsteroidHit.GetComponent<Rigidbody>().velocity = Vector3.zero;
+            AsteroidHit.GetComponent<Collider>().enabled = false;
+            AsteroidHit.gameObject.SetActive(AsteroidHit.gameObject.activeSelf == true ? false : true);
+        }
+        else{
+            repeats = 0;
+            CancelInvoke("DoneDamage");
+            List<GameObject> newlist = GetComponent<AsteroidBehavoir>().GetList("Asteroid");
+            GetComponent<AsteroidBehavoir>().addEvadedAsteroids();
+            newlist.Remove(AsteroidHit);
+            GetComponent<AsteroidBehavoir>().SetList("Asteroid", newlist);
+            Destroy(AsteroidHit, 0);
+        }
     }
 }
