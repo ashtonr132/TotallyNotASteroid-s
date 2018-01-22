@@ -35,7 +35,7 @@ public class PlayerBehavoir : MonoBehaviour
         SplashText.GetComponent<Text>().text = SplashString;    
         if (count > 25)
         {
-            InstructionsUI.transform.position = Vector3.MoveTowards(InstructionsUI.transform.position, new Vector3(InstructionsUI.transform.position.x, UIY + 50, InstructionsUI.transform.position.z), 5 * Time.deltaTime);
+            InstructionsUI.transform.position = Vector3.MoveTowards(InstructionsUI.transform.position, new Vector3(InstructionsUI.transform.position.x, UIY + 75, InstructionsUI.transform.position.z), 5 * Time.deltaTime);
         }
         if (IsPlayerDead() == true) //do the end game ui's
         {

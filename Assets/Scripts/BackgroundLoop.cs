@@ -13,8 +13,11 @@ public class BackgroundLoop : MonoBehaviour {
 
 	void Update ()
     {
-	    var newPosition = Mathf.Repeat(Time.time * bckScrollSpeed, tileSizex); //move over time between voundaries
-	    transform.position = startPos + Vector3.right * newPosition;
+        if (transform.position.x >= -92)
+        {
+            transform.position = startPos;
+        }
+	    transform.position = startPos + (-Vector3.right * Mathf.Repeat(Time.time * bckScrollSpeed, tileSizex));
 	}
 }
 

@@ -21,23 +21,35 @@ public class AsteroidBehavoir : MonoBehaviour
         OuterCol = OuterRing.GetComponent<Collider>(); //colliders of ship
         InnerCol = InnerRing.GetComponent<Collider>();
         InvokeRepeating("DifficultyAdd", 5.0f, 5.0f);
-        foreach (GameObject Shield in GameObject.FindGameObjectsWithTag("Shield")) ShieldList.Add(Shield);
+        foreach (GameObject Shield in GameObject.FindGameObjectsWithTag("Shield"))
+        {
+            ShieldList.Add(Shield);
+        }
         ShieldList[0].transform.position = new Vector3(OuterCol.bounds.center.x + 2, OuterCol.bounds.center.y, OuterCol.bounds.center.z); //setting starting pos
         ShieldList[1].transform.position = new Vector3(OuterCol.bounds.center.x - 2, OuterCol.bounds.center.y, OuterCol.bounds.center.z);
         ShieldList[2].transform.position = new Vector3(OuterCol.bounds.center.x, OuterCol.bounds.center.y + 2, OuterCol.bounds.center.z);
         ShieldList[3].transform.position = new Vector3(OuterCol.bounds.center.x, OuterCol.bounds.center.y - 2, OuterCol.bounds.center.z);
-        foreach (GameObject Shield in ShieldList) Shield.SetActive(false);
+        foreach (GameObject Shield in ShieldList)
+        {
+            Shield.SetActive(false);
+        }
     }
 
     void Update()
     {
-        if (gameObject.GetComponent<PlayerBehavoir>().IsPlayerDead() == false) Score++;
+        if (GetComponent<PlayerBehavoir>().IsPlayerDead() == false)
+        {
+            Score++;
+        }
         scoreUI.GetComponent<Text>().text = "Score : " + Score; //display latest score val
-        InnerRing.transform.RotateAround(InnerCol.bounds.center, Vector3.forward, Time.deltaTime * 5);
-        OuterRing.transform.RotateAround(OuterCol.bounds.center, -Vector3.forward, Time.deltaTime * 5);
+        InnerRing.transform.RotateAround(Vector3.zero, Vector3.forward, Time.deltaTime * 5);
+        OuterRing.transform.RotateAround(Vector3.zero, -Vector3.forward, Time.deltaTime * 5);
         if(ShieldActive == true)
         {
-            foreach (GameObject Shield in ShieldList) Shield.SetActive(true);
+            foreach (GameObject Shield in ShieldList)
+            {
+                Shield.SetActive(true);
+            }
             if (x == 0)
             {
                 InvokeRepeating("Count", 0.0f, 1.0f);
@@ -47,10 +59,13 @@ public class AsteroidBehavoir : MonoBehaviour
             {
                 if (Counter < 2)
                 {
-                        ShieldRotationSpeed += 2; //Acceleration
+                    ShieldRotationSpeed += 2; //Acceleration
                     Shield.transform.LookAt(OuterCol.bounds.center);
                     Shield.transform.RotateAround(OuterCol.bounds.center, new Vector3(0, 0, 2.5f), ShieldRotationSpeed * Time.deltaTime);
-                    if (DistanceBetween(Shield.transform.position, OuterCol.bounds.center) < 5) Shield.transform.Translate(-Vector3.forward * Time.deltaTime); //move away from player OT if within 5 units
+                    if (DistanceBetween(Shield.transform.position, OuterCol.bounds.center) < 5)
+                    {
+                        Shield.transform.Translate(-Vector3.forward * Time.deltaTime);
+                    } //move away from player OT if within 5 units
                 }
                 else if (Counter < 5)
                 {
@@ -59,10 +74,16 @@ public class AsteroidBehavoir : MonoBehaviour
                 }
                 else if (Counter < 7)
                 {
-                    if(!(ShieldRotationSpeed <= 0)) ShieldRotationSpeed -= 2; //Decelleration
+                    if (!(ShieldRotationSpeed <= 0))
+                    {
+                        ShieldRotationSpeed -= 2;
+                    } //Decelleration
                     Shield.transform.LookAt(OuterCol.bounds.center);
                     Shield.transform.RotateAround(OuterCol.bounds.center, new Vector3(0, 0, 2.5f), ShieldRotationSpeed * Time.deltaTime);
-                    if (DistanceBetween(Shield.transform.position, OuterCol.bounds.center) > 2) Shield.transform.Translate(Vector3.forward * Time.deltaTime); //move away from player OT if within 5 units
+                    if (DistanceBetween(Shield.transform.position, OuterCol.bounds.center) > 2)
+                    {
+                        Shield.transform.Translate(Vector3.forward * Time.deltaTime);
+                    } //move away from player OT if within 5 units
                 }
             }
             if(Counter > 6)
@@ -71,7 +92,10 @@ public class AsteroidBehavoir : MonoBehaviour
                 Counter = 0;
                 ShieldActive = false;
                 x = 0;
-                foreach (GameObject Shield in ShieldList) Shield.SetActive(false);
+                foreach (GameObject Shield in ShieldList)
+                {
+                    Shield.SetActive(false);
+                }
             }
            
         }
@@ -80,10 +104,22 @@ public class AsteroidBehavoir : MonoBehaviour
             bool SpawnFailed = false;
             float a = Mathf.Sqrt(Random.Range(0.25f, 9.0f)), b = Random.Range(0.0f, 80.0f), c = Random.Range(0.0f, 4.0f), d = Random.Range(-4.0f, 4.0f); //a velocity and size scale, b bytes, c spawn random, d spawn side pos/min variance
             Vector3 SpawnPosition; //assigning random spawn pos
-            if (c <= 1) SpawnPosition = new Vector3(transform.position.x + d, (transform.position.y + 20), 0);
-            else if (c <= 2) SpawnPosition = new Vector3((transform.position.x + 20), transform.position.y + d, 0);
-            else if (c <= 3) SpawnPosition = new Vector3(transform.position.x + d, (transform.position.y - 20), 0);
-            else SpawnPosition = new Vector3(transform.position.x - 20, (transform.position.y + d), 0);
+            if (c <= 1)
+            {
+                SpawnPosition = new Vector3(transform.position.x + d, (transform.position.y + 20), 0);
+            }
+            else if (c <= 2)
+            {
+                SpawnPosition = new Vector3((transform.position.x + 20), transform.position.y + d, 0);
+            }
+            else if (c <= 3)
+            {
+                SpawnPosition = new Vector3(transform.position.x + d, (transform.position.y - 20), 0);
+            }
+            else
+            {
+                SpawnPosition = new Vector3(transform.position.x - 20, (transform.position.y + d), 0);
+            }
             foreach (GameObject Astorpwrup in AsteroidList)
             {
                 if (DistanceBetween((Astorpwrup.GetComponent<Collider>().bounds.center + Astorpwrup.GetComponent<Collider>().bounds.extents), SpawnPosition) <= (a * Mathf.Sqrt(a))) SpawnFailed = true; //if any new asteroid will spawn inside a prexisting asteroid failspawn
@@ -95,16 +131,28 @@ public class AsteroidBehavoir : MonoBehaviour
                 AsteroidList.Add(Asteroid);
                 Rigidbody AstRB = Asteroid.GetComponent<Rigidbody>(); //this asteroids RB
                 Asteroid.transform.localScale = Vector3.one * a / 100; //size scaled betw /3 and 3*
-                if (SpawnPosition.y == transform.position.y + 20) AstroidVelo = -transform.up * (VeloInc + 1) * 200 / Mathf.Sqrt(a); //velocity maths, larger asteroids spawn with smaller velocities, velo dir relative to spawnp
-                else if (SpawnPosition.y == transform.position.y - 20) AstroidVelo = transform.up * (VeloInc + 1) * 200 / Mathf.Sqrt(a);
-                else if (SpawnPosition.x == transform.position.x + 20) AstroidVelo = -transform.right * (VeloInc + 1) * 200 / Mathf.Sqrt(a);
-                else AstroidVelo = transform.right * (VeloInc + 1) * 200 / Mathf.Sqrt(a);
+                if (SpawnPosition.y == transform.position.y + 20)
+                {
+                    AstroidVelo = -transform.up * (VeloInc + 1) * 200 / Mathf.Sqrt(a);
+                }//velocity maths, larger asteroids spawn with smaller velocities, velo dir relative to spawnp
+                else if (SpawnPosition.y == transform.position.y - 20)
+                {
+                    AstroidVelo = transform.up * (VeloInc + 1) * 200 / Mathf.Sqrt(a);
+                }
+                else if (SpawnPosition.x == transform.position.x + 20)
+                {
+                    AstroidVelo = -transform.right * (VeloInc + 1) * 200 / Mathf.Sqrt(a);
+                }
+                else
+                {
+                    AstroidVelo = transform.right * (VeloInc + 1) * 200 / Mathf.Sqrt(a);
+                }
                 AstRB.mass = 80 * a;
                 AstRB.velocity = AstroidVelo / AstRB.mass;
                 byte[] mybyte = System.BitConverter.GetBytes(b); //color variance via bits from rand float
                 while (mybyte[1] < 20 || mybyte[1] > 50) //is too dark or too light? reroll
                 {
-                   b = Random.Range(0.0f, 80.0f);
+                    b = Random.Range(0.0f, 80.0f);
                     mybyte = System.BitConverter.GetBytes(b);
                 }
                 if (Asteroid.gameObject.tag == "Asteroid")
@@ -129,7 +177,10 @@ public class AsteroidBehavoir : MonoBehaviour
                 AsteroidSpawnCDTimer = 0;
             }
         }
-        else AsteroidSpawnCDTimer += (Random.Range(0.0f, 3.0f) * Time.deltaTime); //asteroids spawn timer variance
+        else
+        {
+            AsteroidSpawnCDTimer += (Random.Range(0.0f, 3.0f) * Time.deltaTime);
+        }//asteroids spawn timer variance
     }
 
     private void DifficultyAdd()
@@ -154,7 +205,10 @@ public class AsteroidBehavoir : MonoBehaviour
 
     public void setScore(int scorein)
     {
-        if (gameObject.GetComponent<PlayerBehavoir>().IsPlayerDead() == false) Score += scorein;
+        if (gameObject.GetComponent<PlayerBehavoir>().IsPlayerDead() == false)
+        {
+            Score += scorein;
+        }
     }
 
     public int GetEvadedAsteroids()
@@ -174,7 +228,10 @@ public class AsteroidBehavoir : MonoBehaviour
     }
     public void SetList(string list, List<GameObject> list2)
     {
-        if (list == "Asteroid") AsteroidList = list2;
+        if (list == "Asteroid")
+        {
+            AsteroidList = list2;
+        }
     }
     private void Count()
     {
