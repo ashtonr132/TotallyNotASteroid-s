@@ -7,14 +7,18 @@ using UnityEngine.UI;
 public class PlayerBehavoir : MonoBehaviour
 {
     private int asteroidsondeath = 999999999, PlayerHealth = 3, HighScore = 0, FireReps = 0, RunScore, count;
-    private GameObject EndUI, LifeUI, Score, Barrel, SplashText, AsteroidHit, InstructionsUI;
+    private GameObject EndUI, LifeUI, Score, Barrel, SplashText, AsteroidHit, InstructionsUI, GameStartText;
+    private AudioSource Music;
     public GameObject BulletPrefab; // assign in inspector
-    private float BulletSize = 1, ShotSpeed = 0.275f, BulletVelocityModifier = 1, ShotCDTimer = 0, repeats = 0, UIY = 0;
+    private float BulletSize = 1, ShotSpeed = 0.125f, BulletVelocityModifier = 0.75f, ShotCDTimer = 0, repeats = 0, UIY = 0;
     private bool InvincibilityFrames = false, TripleShot = false;
+    internal static bool GameStarted = false;
     private string SplashString = string.Empty;
 
     void Start()
     {
+        Music = GameObject.Find("Music").GetComponent<AudioSource>();
+        GameStartText = GameObject.Find("GameStartText");
         LifeUI = GameObject.FindGameObjectWithTag("LifeUI"); //finding game objects and assigning their references
         EndUI = GameObject.FindGameObjectWithTag("EndUI");
         InstructionsUI = GameObject.FindGameObjectWithTag("InstructionsUI");
@@ -25,28 +29,37 @@ public class PlayerBehavoir : MonoBehaviour
         HighScore = PlayerPrefs.GetInt("highscore"); //playerprefs persist through scene reloads
         InvokeRepeating("Counter", 0, 1);
         UIY = InstructionsUI.transform.position.y;
-        }
+        StartCoroutine(StartAudio());
+    }
 
     void Update()
     {
-        if (Input.GetKey(KeyCode.Escape))  Application.Quit();
-        ShotCDTimer += Time.deltaTime; //shotspeed incrememnt
-        LifeUI.GetComponent<Text>().text = "Health : " + PlayerHealth; //displays
-        SplashText.GetComponent<Text>().text = SplashString;    
-        if (count > 25)
+        if ((!GameStarted) && Input.anyKey)
         {
-            InstructionsUI.transform.position = Vector3.MoveTowards(InstructionsUI.transform.position, new Vector3(InstructionsUI.transform.position.x, UIY + 75, InstructionsUI.transform.position.z), 5 * Time.deltaTime);
+            GameStarted = (!GameStarted);
+            GameStartText.SetActive(false);
         }
-        if (IsPlayerDead() == true) //do the end game ui's
+        if (GameStarted)
         {
-            NewHighScore();
-            PlayEndScreen();
-        }
-        else
-        {
-            if (Input.GetKey(KeyCode.Space)) Fire();
-            if (Input.GetKey(KeyCode.LeftArrow)) Barrel.transform.RotateAround(GameObject.FindGameObjectWithTag("OuterRing").GetComponent<Collider>().bounds.center, Vector3.forward, 300 * Time.deltaTime); //move LR
-            else if (Input.GetKey(KeyCode.RightArrow)) Barrel.transform.RotateAround(GameObject.FindGameObjectWithTag("OuterRing").GetComponent<Collider>().bounds.center, -Vector3.forward, 300 * Time.deltaTime);
+            if (Input.GetKey(KeyCode.Escape)) Application.Quit();
+            ShotCDTimer += Time.deltaTime; //shotspeed incrememnt
+            LifeUI.GetComponent<Text>().text = "Health : " + PlayerHealth; //displays
+            SplashText.GetComponent<Text>().text = SplashString;
+            if (count > 25)
+            {
+                InstructionsUI.transform.position = Vector3.MoveTowards(InstructionsUI.transform.position, new Vector3(InstructionsUI.transform.position.x, UIY + 75, InstructionsUI.transform.position.z), 5 * Time.deltaTime);
+            }
+            if (IsPlayerDead() == true) //do the end game ui's
+            {
+                NewHighScore();
+                PlayEndScreen();
+            }
+            else
+            {
+                if (Input.GetKey(KeyCode.Space)) Fire();
+                if (Input.GetKey(KeyCode.LeftArrow)) Barrel.transform.RotateAround(GameObject.FindGameObjectWithTag("OuterRing").GetComponent<Collider>().bounds.center, Vector3.forward, 300 * Time.deltaTime); //move LR
+                else if (Input.GetKey(KeyCode.RightArrow)) Barrel.transform.RotateAround(GameObject.FindGameObjectWithTag("OuterRing").GetComponent<Collider>().bounds.center, -Vector3.forward, 300 * Time.deltaTime);
+            }
         }
     }
 
@@ -56,15 +69,18 @@ public class PlayerBehavoir : MonoBehaviour
         if (col.gameObject.tag == "Asteroid" && InvincibilityFrames == false)
         {
             PlayerHealth--;
+            AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Hit"), GameObject.Find("Music").transform.position, 0.35f);
             AsteroidHit = col.gameObject;
             InvokeRepeating("DoneDamage", 0, 1);
             StartCoroutine(WaitFor(0.5f, "InvincibilityFrames"));
             foreach (GameObject Asteroid in GetComponent<AsteroidBehavoir>().GetList("Asteroid"))
             {
-               if (Asteroid != null) //stops npe's when GO is deleted from list (shouldn't be needed as lists are edited correctly, but still trips)
+                if (Asteroid != null) //stops npe's when GO is deleted from list (shouldn't be needed as lists are edited correctly, but still trips)
                 {
                     if (GetComponent<AsteroidBehavoir>().DistanceBetween(GetComponent<Rigidbody>().transform.position, Asteroid.GetComponent<Rigidbody>().transform.position) >= 1.5)
-                        col.gameObject.GetComponent<Rigidbody>().velocity = transform.position - Vector3.forward * Time.deltaTime; //an asteroid is within outering collider so force it out
+                    {
+                        col.gameObject.GetComponent<Rigidbody>().velocity = transform.position - Vector3.forward * Time.deltaTime;
+                    } //an asteroid is within outering collider so force it out
                 }
             }
         }
@@ -72,6 +88,7 @@ public class PlayerBehavoir : MonoBehaviour
 
     public void PowerUpEffect()
     {
+        AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Powerup"), GameObject.Find("Music").transform.position, 0.35f);
         var x = UnityEngine.Random.Range(0, 9);
         switch (x)
         {
@@ -181,8 +198,7 @@ public class PlayerBehavoir : MonoBehaviour
         {
             asteroidsondeath = gameObject.GetComponent<AsteroidBehavoir>().GetEvadedAsteroids();
         }
-        EndUI.GetComponent<Text>().text = "Score : " + RunScore + System.Environment.NewLine + "Session HighScore : " +
-         HighScore + System.Environment.NewLine + "Asteroids Cleared : " + asteroidsondeath;
+        EndUI.GetComponent<Text>().text = "Score : " + RunScore + System.Environment.NewLine + "Session HighScore : " + HighScore + System.Environment.NewLine + "Asteroids Cleared : " + asteroidsondeath;
         LifeUI.SetActive(false); Score.SetActive(false);
         StartCoroutine(WaitFor(10, "ResetScene"));
     }
@@ -193,7 +209,9 @@ public class PlayerBehavoir : MonoBehaviour
         switch (callref)
         {
             case "ResetScene":
+                AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("GameOver"), GameObject.Find("Music").transform.position, 0.35f);
                 yield return new WaitForSeconds(WaitTime);
+                GameStarted = false;
                 SceneManager.LoadScene("scene");
                 break;
             case ("InvincibilityFrames"):
@@ -202,10 +220,10 @@ public class PlayerBehavoir : MonoBehaviour
                 InvincibilityFrames = false;
                 break;
             case ("BigBullet"):
-                BulletVelocityModifier = 0.5f;
+                BulletVelocityModifier = 0.55f;
                 BulletSize = 3;
                 yield return new WaitForSeconds(WaitTime);
-                BulletVelocityModifier = 1;
+                BulletVelocityModifier = 0.75f;
                 BulletSize = 1;
                 break;
             case ("TripleShot"):
@@ -226,7 +244,7 @@ public class PlayerBehavoir : MonoBehaviour
         if (ShotCDTimer > ShotSpeed)
         {
             Vector3 FirePoint3 = Barrel.transform.position + Barrel.transform.rotation * new Vector3(0.55f, 0, 0);
-            var Bullet = (GameObject)Instantiate(BulletPrefab, FirePoint3, Barrel.transform.rotation);
+            GameObject Bullet = (GameObject)Instantiate(BulletPrefab, FirePoint3, Barrel.transform.rotation);
             Physics.IgnoreCollision(Bullet.GetComponent<Collider>(), Barrel.GetComponent<Collider>(), true);
             BulletCharacteristics(Bullet);
             if (TripleShot == true)
@@ -244,7 +262,7 @@ public class PlayerBehavoir : MonoBehaviour
     {
         bullet.GetComponent<Rigidbody>().velocity = bullet.transform.right * 30 * BulletVelocityModifier;
         bullet.transform.localScale = Vector3.one * BulletSize / 4;
-        Destroy(bullet, 7.5f);
+        Destroy(bullet, 2.5f);
     }
     public bool GetIsInvincible()
     {
@@ -275,4 +293,26 @@ public class PlayerBehavoir : MonoBehaviour
         count++;
         if(count > 32) CancelInvoke("Counter");
     }
+
+    IEnumerator StartAudio()
+    {
+        foreach (var track in Resources.LoadAll("Music", typeof(AudioClip)))
+        {
+            Music.clip = ((AudioClip)track);
+            Music.Play();
+            yield return new WaitForSeconds(Music.clip.length);
+        }
+        StartCoroutine(StartAudio());
+    }
 }
+/* music;
+ * space-boss-battle-theme Matthew Pablo
+ * wheres-my-spaceship spuispuin
+ * spacebossbattle Hitctrl
+ * hypersspace MidFag
+ * less-appealing Macro
+ * through-space maxstack
+ * space-music mrpoly
+ * misc sound effects;
+ * 8-bit-sound-effect-pack-vol-001 Xenocity
+ */
