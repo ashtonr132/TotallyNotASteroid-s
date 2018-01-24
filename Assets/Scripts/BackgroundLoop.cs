@@ -13,14 +13,11 @@ public class BackgroundLoop : MonoBehaviour {
 
     void Update()
     {
-        if (PlayerBehavoir.GameStarted)
+        if (transform.position.x >= -92)
         {
-            if (transform.position.x >= -92)
-            {
-                transform.position = startPos;
-            }
-            transform.position = startPos + (-Vector3.right * Mathf.Repeat(Time.time * bckScrollSpeed, tileSizex));
+            transform.position = startPos;
         }
+        transform.position = startPos + (-Vector3.right * Mathf.Repeat(Time.time * bckScrollSpeed, tileSizex));
     }
 }
 

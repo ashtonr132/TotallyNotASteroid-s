@@ -8,12 +8,6 @@ public class BulletBehavoir : MonoBehaviour
     {
         transform.Rotate(new Vector3(0, 180, 0), Space.Self);
     }
-    void Update()
-    {
-        Vector3 pos = transform.position;
-        pos.z = 0;  
-        transform.position = pos;
-    }
     void OnCollisionEnter(Collision col)
     {
         if (col.gameObject.tag == "PowerUp")
