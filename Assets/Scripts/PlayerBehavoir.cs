@@ -96,7 +96,6 @@ public class PlayerBehavoir : MonoBehaviour
 
     void OnCollisionEnter(Collision col)
     {
-        col.gameObject.GetComponent<Rigidbody>().velocity = -col.gameObject.GetComponent<Rigidbody>().velocity * 1.35f; //Bounce away with force, makes GO getting stuck less likely
         if (col.gameObject.tag == "Asteroid" && InvincibilityFrames == false)
         {
             PlayerHealth--;
@@ -104,16 +103,6 @@ public class PlayerBehavoir : MonoBehaviour
             AsteroidHit = col.gameObject;
             InvokeRepeating("DoneDamage", 0, 1);
             StartCoroutine(WaitFor(0.5f, "InvincibilityFrames"));
-            foreach (GameObject Asteroid in GetComponent<AsteroidBehavoir>().GetList("Asteroid"))
-            {
-                if (Asteroid != null) //stops npe's when GO is deleted from list (shouldn't be needed as lists are edited correctly, but still trips)
-                {
-                    if (Vector3.Distance(GetComponent<Rigidbody>().transform.position, Asteroid.GetComponent<Rigidbody>().transform.position) >= 1.5)
-                    {
-                        col.gameObject.GetComponent<Rigidbody>().velocity = transform.position - Vector3.forward * Time.deltaTime; //an asteroid is within outering collider so force it out
-                    }
-                }
-            }
         }
     }
 

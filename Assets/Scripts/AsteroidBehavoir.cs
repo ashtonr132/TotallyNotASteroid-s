@@ -108,7 +108,7 @@ public class AsteroidBehavoir : MonoBehaviour
         if (AsteroidSpawnCDTimer > AsteroidSpawnRate)
         {
             bool SpawnFailed = false;
-            float a = Mathf.Sqrt(Random.Range(0.25f, 9.0f)), b = Random.Range(0.0f, 80.0f), c = Random.Range(0.0f, 4.0f), d = Random.Range(-4.0f, 4.0f); //a velocity and size scale, b bytes, c spawn random, d spawn side pos/min variance
+            float a = Mathf.Sqrt(Random.Range(0.075f, 6.75f)), b = Random.Range(0.0f, 80.0f), c = Random.Range(0.0f, 4.0f), d = Random.Range(-4.0f, 4.0f); //a velocity and size scale, b bytes, c spawn random, d spawn side pos/min variance
             Vector3 SpawnPosition; //assigning random spawn pos
             if (c <= 1)
             {
@@ -144,7 +144,7 @@ public class AsteroidBehavoir : MonoBehaviour
                 GameObject Asteroid = (GameObject)Instantiate(Prefab, SpawnPosition, new Quaternion(0, 0, 0, 0));
                 AsteroidList.Add(Asteroid);
                 Rigidbody AstRB = Asteroid.GetComponent<Rigidbody>(); //this asteroids RB
-                Asteroid.transform.localScale = Vector3.one * a / 100; //size scaled betw /3 and 3*
+                Asteroid.transform.localScale = Vector3.one * a / 100; //size scaled betw a rand
                 if (SpawnPosition.y == transform.position.y + 20)
                 {
                     AstroidVelo = -transform.up * (VeloInc + 1) * 175 / Mathf.Sqrt(a);//velocity maths, larger asteroids spawn with smaller velocities, velo dir relative to spawnp
@@ -198,7 +198,7 @@ public class AsteroidBehavoir : MonoBehaviour
     }
     private void DifficultyAdd()
     {
-        if (AsteroidSpawnRate > 1)
+        if (AsteroidSpawnRate > 0.7f)
         {
             AsteroidSpawnRate -= 0.1f; //shorter spawn gap
             VeloInc = +0.05f; //spawn higher velo
