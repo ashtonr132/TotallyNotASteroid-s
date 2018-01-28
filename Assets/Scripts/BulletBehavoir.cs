@@ -6,7 +6,7 @@ public class BulletBehavoir : MonoBehaviour
 {
     void Start()
     {
-        transform.Rotate(new Vector3(0, 180, 0), Space.Self);
+        transform.Rotate(new Vector3(-90, 0, 0), Space.Self);
     }
     void OnCollisionEnter(Collision col)
     {
