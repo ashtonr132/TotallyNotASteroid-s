@@ -7,7 +7,7 @@ public class AsteroidDestroy : MonoBehaviour
     private AsteroidBehavoir astbehav;
     void Start()
     {
-        Player = GameObject.FindGameObjectWithTag("Player");
+        Player = GameObject.Find("ship");
         astbehav = Player.GetComponent<AsteroidBehavoir>();
     }
 

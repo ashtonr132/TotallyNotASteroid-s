@@ -15,9 +15,9 @@ public class AsteroidBehavoir : MonoBehaviour
     
     void Start()
     {
-        scoreUI = GameObject.FindGameObjectWithTag("Score");
-        InnerRing = GameObject.FindGameObjectWithTag("InnerRing"); //of player ship
-        OuterRing = GameObject.FindGameObjectWithTag("OuterRing");
+        scoreUI = GameObject.Find("Score");
+        InnerRing = GameObject.Find("inner"); //of player ship
+        OuterRing = GameObject.Find("outer");
         OuterCol = OuterRing.GetComponent<Collider>(); //colliders of ship
         InvokeRepeating("DifficultyAdd", 5.0f, 5.0f);
         foreach (GameObject Shield in GameObject.FindGameObjectsWithTag("Shield"))

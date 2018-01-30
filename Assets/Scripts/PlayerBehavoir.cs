@@ -7,28 +7,26 @@ using UnityEngine.UI;
 public class PlayerBehavoir : MonoBehaviour
 {
     private int asteroidsondeath = 0, PlayerHealth = 3, HighScore = 0, FireReps = 0, RunScore;
-    private GameObject EndUI, Score, Barrel, SplashText, AsteroidHit, InstructionsUI, GameStartText, AmmoBar, HealthBar;
-    private AudioSource Music;
+    private GameObject EndUI, Score, Barrel, AsteroidHit, InstructionsUI, GameStartText, AmmoBar, HealthBar, Music;
     public GameObject BulletPrefab; // assign in inspector
     private float BulletSize = 1, BulletMass = 1, ShotSpeed = 0.125f, BulletVelocityModifier = 0.75f, ShotCDTimer = 0, repeats = 0, UIY = 0, AmmoRegenTimer = 0, MaxAmmo = 30, AmmoCount, BarrelMoveSpeed = 150, AmmoWait = 0.5f;
     private bool InvincibilityFrames = false, TripleShot = false;
     internal static bool GameStarted = false;
-    private string SplashString = string.Empty;
+    private string SplashString;
 
     void Start()
     {
         AmmoCount = MaxAmmo;
-        Music = GameObject.Find("Music").GetComponent<AudioSource>();
         GameStartText = GameObject.Find("GameStartText");
-        EndUI = GameObject.FindGameObjectWithTag("EndUI");
-        InstructionsUI = GameObject.FindGameObjectWithTag("InstructionsUI");
-        Score = GameObject.FindGameObjectWithTag("Score");
-        Barrel = GameObject.FindGameObjectWithTag("Barrel");
-        SplashText = GameObject.FindGameObjectWithTag("SplashText");
+        EndUI = GameObject.Find("EndUI");
+        InstructionsUI = GameObject.Find("InstructionsUI");
+        Score = GameObject.Find("Score");
+        Barrel = GameObject.Find("Barrel");
         EndUI.GetComponent<Text>().text = string.Empty; //initialised as blank to get rid of the filler text
         HighScore = PlayerPrefs.GetInt("highscore"); //playerprefs persist through scene reloads
         AmmoBar = GameObject.Find("GreenBackground");
         HealthBar = GameObject.Find("RedBackground");
+        Music = GameObject.Find("Music");
         UIY = InstructionsUI.transform.position.y;
         StartCoroutine(StartAudio());
         UpdateBarUI();
@@ -54,7 +52,6 @@ public class PlayerBehavoir : MonoBehaviour
             }
             UpdateBarUI();
             ShotCDTimer += Time.deltaTime; //shotspeed incrememnt
-            SplashText.GetComponent<Text>().text = SplashString;
             if (Time.time > 15)
             {
                 InstructionsUI.transform.position = Vector3.MoveTowards(InstructionsUI.transform.position, new Vector3(InstructionsUI.transform.position.x, UIY + 500, InstructionsUI.transform.position.z), 12 * Time.deltaTime);
@@ -72,7 +69,7 @@ public class PlayerBehavoir : MonoBehaviour
                 }
                 if (Input.GetKey(KeyCode.LeftArrow))
                 {
-                    Barrel.transform.RotateAround(GameObject.FindGameObjectWithTag("OuterRing").GetComponent<Collider>().bounds.center, Vector3.forward, BarrelMoveSpeed * Time.deltaTime); //move LR
+                    Barrel.transform.RotateAround(GameObject.Find("outer").GetComponent<Collider>().bounds.center, Vector3.forward, BarrelMoveSpeed * Time.deltaTime); //move LR
                     if (BarrelMoveSpeed < 450) // allows fast rotation without the loss of small movement accuracy
                     {
                         BarrelMoveSpeed += 10f;
@@ -80,7 +77,7 @@ public class PlayerBehavoir : MonoBehaviour
                 }
                 else if (Input.GetKey(KeyCode.RightArrow))
                 {
-                    Barrel.transform.RotateAround(GameObject.FindGameObjectWithTag("OuterRing").GetComponent<Collider>().bounds.center, -Vector3.forward, BarrelMoveSpeed * Time.deltaTime);
+                    Barrel.transform.RotateAround(GameObject.Find("outer").GetComponent<Collider>().bounds.center, -Vector3.forward, BarrelMoveSpeed * Time.deltaTime);
                     if (BarrelMoveSpeed < 450)
                     {
                         BarrelMoveSpeed += 10f;
@@ -99,22 +96,25 @@ public class PlayerBehavoir : MonoBehaviour
         if (col.gameObject.tag == "Asteroid" && InvincibilityFrames == false)
         {
             PlayerHealth--;
-            AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Hit"), GameObject.Find("Music").transform.position, 0.35f);
+            AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Hit"), GameObject.Find("Music").transform.position, 0.35f);
             AsteroidHit = col.gameObject;
             InvokeRepeating("DoneDamage", 0, 1);
             StartCoroutine(WaitFor(0.5f, "InvincibilityFrames"));
         }
     }
 
-    public void PowerUpEffect()
+    public void PowerUpEffect(Vector3 pos)
     {
-        AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Powerup"), GameObject.Find("Music").transform.position, 0.35f);
+        GameObject SplashText = Instantiate((GameObject)Resources.Load("SplashText"), pos, Quaternion.identity, GameObject.Find("Canvas").transform);
+        SplashText.GetComponent<Text>().text = SplashString;
+        AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Powerup"), GameObject.Find("Music").transform.position, 0.35f);
         var x = UnityEngine.Random.Range(0, 10);
         switch (x)
         {
             case 0:
                 GetComponent<AsteroidBehavoir>().setScore((int)(Mathf.Abs(GetComponent<AsteroidBehavoir>().getScore() * 0.05f)));
                 SplashString = "More Points!";
+                StartCoroutine(WaitFor());
                 break;
             case 1:
                 if (PlayerHealth < 5)
@@ -122,22 +122,25 @@ public class PlayerBehavoir : MonoBehaviour
                     PlayerHealth++;
                     SplashString = "Health Up!";
                 }
-                else PowerUpEffect();
+                else PowerUpEffect(pos);
+                StartCoroutine(WaitFor());
                 break;
             case 2:
                 for (var i = 0; i < 36; i++)
                 {
-                    Vector3 pos = CircleSpawn(Vector3.zero, 3, i * 10); //shoots bullets in a circle around the player
-                    Quaternion rot = Quaternion.FromToRotation(-Vector3.right, Vector3.zero - pos);
-                    GameObject Bullet = (GameObject)Instantiate(BulletPrefab, pos, rot);
+                    Vector3 pos1 = CircleSpawn(Vector3.zero, 3, i * 10); //shoots bullets in a circle around the player
+                    Quaternion rot = Quaternion.FromToRotation(-Vector3.right, Vector3.zero - pos1);
+                    GameObject Bullet = (GameObject)Instantiate(BulletPrefab, pos1, rot);
                     BulletCharacteristics(Bullet);
                     Destroy(Bullet, 2);
                 }
                 SplashString = "Bullet Blitz";
+                StartCoroutine(WaitFor());
                 break;
             case 3:
                 InvokeRepeating("BulletRing", 0, 0.01f); //shoots bullets in a timed rotation
                 SplashString = "Bullet Wave";
+                StartCoroutine(WaitFor());
                 break;
             case 4:
                 StartCoroutine(WaitFor(3, "BigBullet"));
@@ -159,11 +162,13 @@ public class PlayerBehavoir : MonoBehaviour
                         Asteroid.GetComponent<Rigidbody>().velocity = Vector3.zero;
                     }
                 }
+                StartCoroutine(WaitFor());
                 SplashString = "Freeze";
                 break;
             case 8:
                 GetComponent<AsteroidBehavoir>().setShieldBool(true);
                 SplashString = "Shield Activated";
+                StartCoroutine(WaitFor());
                 break;
             case 9:
                 if (MaxAmmo < 45)
@@ -171,9 +176,11 @@ public class PlayerBehavoir : MonoBehaviour
                     MaxAmmo += 3;
                     SplashString = "Ammo Up!";
                 }
-                else PowerUpEffect();
+                else PowerUpEffect(pos);
+                StartCoroutine(WaitFor());
                 break;
             default:
+                StartCoroutine(WaitFor());
                 SplashString = "error in powerupeffect";
                 break;
         }
@@ -228,7 +235,7 @@ public class PlayerBehavoir : MonoBehaviour
         StartCoroutine(WaitFor(10, "ResetScene"));
     }
 
-    public IEnumerator WaitFor(float WaitTime, string callref) //varios timed function calls
+    public IEnumerator WaitFor(float WaitTime = 0, string callref = "", GameObject SplashText = null) //varios timed function calls
     {
         GetComponent<AsteroidBehavoir>().setScore((int)(Mathf.Abs(GetComponent<AsteroidBehavoir>().getScore() * 0.01f)));
         switch (callref)
@@ -266,9 +273,14 @@ public class PlayerBehavoir : MonoBehaviour
                 ShotSpeed += 0.1f;
                 AmmoWait = 0.5f;
                 break;
+            default:
+                break;
         }
         yield return new WaitForSeconds(1.5f);
-        SplashString = string.Empty;
+        if (SplashText != null)
+        {
+            Destroy(SplashText);
+        }
     }
     internal IEnumerator FadeOut(GameObject FadeMe, float WaitTime) //slowly up the transparency value of an object until it is transparent then destroy it
     {
@@ -363,11 +375,12 @@ public class PlayerBehavoir : MonoBehaviour
     }
     IEnumerator StartAudio()
     {
+        AudioSource music = Music.GetComponent<AudioSource>();
         foreach (var track in Resources.LoadAll("Music", typeof(AudioClip)))
         {
-            Music.clip = ((AudioClip)track);
-            Music.Play();
-            yield return new WaitForSeconds(Music.clip.length);
+            music.clip = ((AudioClip)track);
+            music.Play();
+            yield return new WaitForSeconds(music.clip.length);
         }
         StartCoroutine(StartAudio());
     }
