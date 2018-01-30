@@ -236,6 +236,22 @@ public class PlayerBehavoir : MonoBehaviour
     public IEnumerator WaitFor(Vector3 pos, float WaitTime = 0, string callref = "") //varios timed function calls
     {
         GetComponent<AsteroidBehavoir>().setScore((int)(Mathf.Abs(GetComponent<AsteroidBehavoir>().getScore() * 0.01f)));
+        if (pos.x < -423)
+        {
+            pos.x = -423;
+        }
+        else if (pos.x > -375)
+        {
+            pos.x = -375;
+        }
+        if (pos.y < -210)
+        {
+            pos.y = -210;
+        }
+        else if (pos.y > -235)
+        {
+            pos.y = -235;
+        }
         Quaternion quat;
         if (pos.y < transform.position.y)
         {
@@ -245,6 +261,7 @@ public class PlayerBehavoir : MonoBehaviour
         {
             quat = Quaternion.LookRotation(transform.forward, pos - transform.position);
         }
+        
         GameObject SplashText = Instantiate((GameObject)Resources.Load("SplashText"), pos, quat , GameObject.Find("Canvas").transform);
         SplashText.GetComponent<Text>().text = SplashString;
         switch (callref)
