@@ -27,7 +27,6 @@ public class PlayerBehavoir : MonoBehaviour
         AmmoBar = GameObject.Find("GreenBackground");
         HealthBar = GameObject.Find("RedBackground");
         Music = GameObject.Find("Music");
-        UIY = InstructionsUI.transform.position.y;
         StartCoroutine(StartAudio());
         UpdateBarUI();
     }
@@ -54,7 +53,7 @@ public class PlayerBehavoir : MonoBehaviour
             ShotCDTimer += Time.deltaTime; //shotspeed incrememnt
             if (Time.time > 15)
             {
-                InstructionsUI.transform.position = Vector3.MoveTowards(InstructionsUI.transform.position, new Vector3(InstructionsUI.transform.position.x, UIY + 500, InstructionsUI.transform.position.z), 12 * Time.deltaTime);
+                InstructionsUI.transform.position = Vector3.MoveTowards(InstructionsUI.transform.position, new Vector3(InstructionsUI.transform.position.x, InstructionsUI.transform.position.y + 20, InstructionsUI.transform.position.z), Time.deltaTime);
             }
             if (IsPlayerDead() == true) //do the end game ui's
             {
@@ -99,14 +98,12 @@ public class PlayerBehavoir : MonoBehaviour
             AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Hit"), GameObject.Find("Music").transform.position, 0.35f);
             AsteroidHit = col.gameObject;
             InvokeRepeating("DoneDamage", 0, 1);
-            StartCoroutine(WaitFor(0.5f, "InvincibilityFrames"));
+            StartCoroutine(WaitFor(Vector3.zero, 0.5f, "InvincibilityFrames"));
         }
     }
 
     public void PowerUpEffect(Vector3 pos)
     {
-        GameObject SplashText = Instantiate((GameObject)Resources.Load("SplashText"), pos, Quaternion.identity, GameObject.Find("Canvas").transform);
-        SplashText.GetComponent<Text>().text = SplashString;
         AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Powerup"), GameObject.Find("Music").transform.position, 0.35f);
         var x = UnityEngine.Random.Range(0, 10);
         switch (x)
@@ -114,16 +111,16 @@ public class PlayerBehavoir : MonoBehaviour
             case 0:
                 GetComponent<AsteroidBehavoir>().setScore((int)(Mathf.Abs(GetComponent<AsteroidBehavoir>().getScore() * 0.05f)));
                 SplashString = "More Points!";
-                StartCoroutine(WaitFor());
+                StartCoroutine(WaitFor(pos));
                 break;
             case 1:
                 if (PlayerHealth < 5)
                 {
                     PlayerHealth++;
                     SplashString = "Health Up!";
+                    StartCoroutine(WaitFor(pos));
                 }
                 else PowerUpEffect(pos);
-                StartCoroutine(WaitFor());
                 break;
             case 2:
                 for (var i = 0; i < 36; i++)
@@ -135,24 +132,24 @@ public class PlayerBehavoir : MonoBehaviour
                     Destroy(Bullet, 2);
                 }
                 SplashString = "Bullet Blitz";
-                StartCoroutine(WaitFor());
+                StartCoroutine(WaitFor(pos));
                 break;
             case 3:
                 InvokeRepeating("BulletRing", 0, 0.01f); //shoots bullets in a timed rotation
                 SplashString = "Bullet Wave";
-                StartCoroutine(WaitFor());
+                StartCoroutine(WaitFor(pos));
                 break;
             case 4:
-                StartCoroutine(WaitFor(3, "BigBullet"));
                 SplashString = "Pack a Punch";
+                StartCoroutine(WaitFor(pos, 3, "BigBullet"));
                 break;
             case 5:
-                StartCoroutine(WaitFor(5, "TripleShot"));
                 SplashString = "TripleShot";
+                StartCoroutine(WaitFor(pos, 5, "TripleShot"));
                 break;
             case 6:
-                StartCoroutine(WaitFor(5, "ShotSpeedUp"));
                 SplashString = "ShotSpeedUp";
+                StartCoroutine(WaitFor(pos, 5, "ShotSpeedUp"));
                 break;
             case 7:
                 foreach (GameObject Asteroid in GetComponent<AsteroidBehavoir>().GetList("Asteroid"))
@@ -162,26 +159,27 @@ public class PlayerBehavoir : MonoBehaviour
                         Asteroid.GetComponent<Rigidbody>().velocity = Vector3.zero;
                     }
                 }
-                StartCoroutine(WaitFor());
                 SplashString = "Freeze";
+                StartCoroutine(WaitFor(pos));
+                
                 break;
             case 8:
                 GetComponent<AsteroidBehavoir>().setShieldBool(true);
                 SplashString = "Shield Activated";
-                StartCoroutine(WaitFor());
+                StartCoroutine(WaitFor(pos));
                 break;
             case 9:
                 if (MaxAmmo < 45)
                 {
                     MaxAmmo += 3;
                     SplashString = "Ammo Up!";
+                    StartCoroutine(WaitFor(pos));
                 }
                 else PowerUpEffect(pos);
-                StartCoroutine(WaitFor());
                 break;
             default:
-                StartCoroutine(WaitFor());
                 SplashString = "error in powerupeffect";
+                StartCoroutine(WaitFor(Vector3.zero));
                 break;
         }
     }
@@ -232,12 +230,23 @@ public class PlayerBehavoir : MonoBehaviour
     {
         asteroidsondeath = gameObject.GetComponent<AsteroidBehavoir>().GetEvadedAsteroids();
         EndUI.GetComponent<Text>().text = "Score : " + RunScore + System.Environment.NewLine + "Session HighScore : " + HighScore + System.Environment.NewLine + "Asteroids Cleared : " + asteroidsondeath;
-        StartCoroutine(WaitFor(10, "ResetScene"));
+        StartCoroutine(WaitFor(Vector3.zero, 10, "ResetScene"));
     }
 
-    public IEnumerator WaitFor(float WaitTime = 0, string callref = "", GameObject SplashText = null) //varios timed function calls
+    public IEnumerator WaitFor(Vector3 pos, float WaitTime = 0, string callref = "") //varios timed function calls
     {
         GetComponent<AsteroidBehavoir>().setScore((int)(Mathf.Abs(GetComponent<AsteroidBehavoir>().getScore() * 0.01f)));
+        Quaternion quat;
+        if (pos.y < transform.position.y)
+        {
+            quat = Quaternion.LookRotation(transform.forward, transform.position - pos);
+        }
+        else
+        {
+            quat = Quaternion.LookRotation(transform.forward, pos - transform.position);
+        }
+        GameObject SplashText = Instantiate((GameObject)Resources.Load("SplashText"), pos, quat , GameObject.Find("Canvas").transform);
+        SplashText.GetComponent<Text>().text = SplashString;
         switch (callref)
         {
             case "ResetScene":
@@ -276,9 +285,9 @@ public class PlayerBehavoir : MonoBehaviour
             default:
                 break;
         }
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(3f);
         if (SplashText != null)
-        {
+        {   
             Destroy(SplashText);
         }
     }
