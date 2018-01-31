@@ -9,7 +9,7 @@ public class PlayerBehavoir : MonoBehaviour
     private int asteroidsondeath = 0, PlayerHealth = 3, HighScore = 0, FireReps = 0, RunScore;
     private GameObject EndUI, Score, Barrel, AsteroidHit, InstructionsUI, GameStartText, AmmoBar, HealthBar, Music;
     public GameObject BulletPrefab; // assign in inspector
-    private float BulletSize = 1, BulletMass = 1, ShotSpeed = 0.125f, BulletVelocityModifier = 0.75f, ShotCDTimer = 0, repeats = 0, UIY = 0, AmmoRegenTimer = 0, MaxAmmo = 30, AmmoCount, BarrelMoveSpeed = 150, AmmoWait = 0.5f;
+    private float BulletSize = 1, BulletMass = 1, ShotSpeed = 0.125f, BulletVelocityModifier = 0.75f, ShotCDTimer = 0, repeats = 0, AmmoRegenTimer = 0, MaxAmmo = 30, AmmoCount, BarrelMoveSpeed = 150, AmmoWait = 0.5f;
     private bool InvincibilityFrames = false, TripleShot = false;
     internal static bool GameStarted = false;
     private string SplashString;
@@ -84,7 +84,7 @@ public class PlayerBehavoir : MonoBehaviour
                 }
                 else
                 {
-                    BarrelMoveSpeed = 150;
+                    BarrelMoveSpeed = 100;
                 }
             }
         }
@@ -358,8 +358,9 @@ public class PlayerBehavoir : MonoBehaviour
         repeats++;
         if (repeats < 6)
         {
-            AsteroidHit.GetComponent<Rigidbody>().isKinematic = true;
-            AsteroidHit.GetComponent<Rigidbody>().velocity = Vector3.zero;
+            Rigidbody ARB = AsteroidHit.GetComponent<Rigidbody>();
+            ARB.isKinematic = true;
+            ARB.velocity = Vector3.zero;
             AsteroidHit.GetComponent<Collider>().enabled = false;
             AsteroidHit.gameObject.SetActive(AsteroidHit.gameObject.activeSelf == true ? false : true);
         }
@@ -367,36 +368,40 @@ public class PlayerBehavoir : MonoBehaviour
         {
             repeats = 0;
             CancelInvoke("DoneDamage");
-            List<GameObject> newlist = GetComponent<AsteroidBehavoir>().GetList("Asteroid");
-            GetComponent<AsteroidBehavoir>().addEvadedAsteroids();
+            AsteroidBehavoir AB = GetComponent<AsteroidBehavoir>();
+            List<GameObject> newlist = AB.GetList("Asteroid");
+            AB.addEvadedAsteroids();
             newlist.Remove(AsteroidHit);
-            GetComponent<AsteroidBehavoir>().SetList("Asteroid", newlist);
+            AB.SetList("Asteroid", newlist);
             Destroy(AsteroidHit, 0);
         }
     }
     void UpdateBarUI()
     {
+        bool Display;
         for (int i = 0; i < HealthBar.transform.childCount; i++) //foreach health activate one hp bar
         {
             if (i < PlayerHealth)
             {
-                HealthBar.transform.GetChild(i).gameObject.SetActive(true);
+                Display = true;
             }
             else
             {
-                HealthBar.transform.GetChild(i).gameObject.SetActive(false);
+                Display = false;
             }
+            HealthBar.transform.GetChild(i).gameObject.SetActive(Display);
         }
         for (int i = 1; i <= AmmoBar.transform.childCount; i++) //foreach 3 ammo activate one ammo bar
         {
             if (i * 3 <= AmmoCount)
             {
-                AmmoBar.transform.GetChild(i-1).gameObject.SetActive(true);
+                Display = true;
             }
             else
             {
-                AmmoBar.transform.GetChild(i-1).gameObject.SetActive(false);
+                Display = false;
             }
+            AmmoBar.transform.GetChild(i - 1).gameObject.SetActive(Display);
         }
     }
     IEnumerator StartAudio()

@@ -9,7 +9,7 @@ public class AsteroidBehavoir : MonoBehaviour
     public GameObject AsteroidPrefab, PowerUpPrefab; //set in inspector
     private bool ShieldActive = false;
     private GameObject InnerRing, OuterRing, scoreUI;
-    private Vector3 AstroidVelo;
+    private Vector3 AstroidVelo, OuterCenter;
     private Collider OuterCol;
     private List<GameObject> AsteroidList = new List<GameObject>(), ShieldList = new List<GameObject>();
     
@@ -24,10 +24,11 @@ public class AsteroidBehavoir : MonoBehaviour
         {
             ShieldList.Add(Shield);
         }
-        ShieldList[0].transform.position = new Vector3(OuterCol.bounds.center.x + 2, OuterCol.bounds.center.y, OuterCol.bounds.center.z); //setting starting pos
-        ShieldList[1].transform.position = new Vector3(OuterCol.bounds.center.x - 2, OuterCol.bounds.center.y, OuterCol.bounds.center.z);
-        ShieldList[2].transform.position = new Vector3(OuterCol.bounds.center.x, OuterCol.bounds.center.y + 2, OuterCol.bounds.center.z);
-        ShieldList[3].transform.position = new Vector3(OuterCol.bounds.center.x, OuterCol.bounds.center.y - 2, OuterCol.bounds.center.z);
+        OuterCenter = OuterCol.bounds.center;
+        ShieldList[0].transform.position = new Vector3(OuterCenter.x + 2, OuterCenter.y, OuterCenter.z); //setting starting pos
+        ShieldList[1].transform.position = new Vector3(OuterCenter.x - 2, OuterCenter.y, OuterCenter.z);
+        ShieldList[2].transform.position = new Vector3(OuterCenter.x, OuterCenter.y + 2, OuterCenter.z);
+        ShieldList[3].transform.position = new Vector3(OuterCenter.x, OuterCenter.y - 2, OuterCenter.z);
         foreach (GameObject Shield in ShieldList)
         {
             Shield.SetActive(false);
@@ -58,20 +59,21 @@ public class AsteroidBehavoir : MonoBehaviour
                 }
                 foreach (GameObject Shield in ShieldList)
                 {
+                    Transform ShieldTrans = Shield.transform;
                     if (Counter < 2)
                     {
                         ShieldRotationSpeed += 2; //Acceleration
-                        Shield.transform.LookAt(OuterCol.bounds.center);
-                        Shield.transform.RotateAround(OuterCol.bounds.center, new Vector3(0, 0, 2.5f), ShieldRotationSpeed * Time.deltaTime);
-                        if (Vector3.Distance(Shield.transform.position, OuterCol.bounds.center) < 5)
+                        ShieldTrans.LookAt(OuterCenter);
+                        ShieldTrans.RotateAround(OuterCenter, new Vector3(0, 0, 2.5f), ShieldRotationSpeed * Time.deltaTime);
+                        if (Vector3.Distance(Shield.transform.position, OuterCenter) < 5)
                         {
-                            Shield.transform.Translate(-Vector3.forward * Time.deltaTime); //move away from player OT if within 5 units
+                            ShieldTrans.Translate(-Vector3.forward * Time.deltaTime); //move away from player OT if within 5 units
                         }
                     }
                     else if (Counter < 5)
                     {
-                        Shield.transform.LookAt(OuterCol.bounds.center);
-                        Shield.transform.RotateAround(OuterCol.bounds.center, new Vector3(0, 0, 2.5f), ShieldRotationSpeed * Time.deltaTime);
+                        ShieldTrans.LookAt(OuterCenter);
+                        ShieldTrans.RotateAround(OuterCenter, new Vector3(0, 0, 2.5f), ShieldRotationSpeed * Time.deltaTime);
                     }
                     else if (Counter < 7)
                     {
@@ -79,11 +81,11 @@ public class AsteroidBehavoir : MonoBehaviour
                         {
                             ShieldRotationSpeed -= 2; //Decelleration
                         }
-                        Shield.transform.LookAt(OuterCol.bounds.center);
-                        Shield.transform.RotateAround(OuterCol.bounds.center, new Vector3(0, 0, 2.5f), ShieldRotationSpeed * Time.deltaTime);
-                        if (Vector3.Distance(Shield.transform.position, OuterCol.bounds.center) > 2)
+                        ShieldTrans.LookAt(OuterCenter);
+                        ShieldTrans.RotateAround(OuterCenter, new Vector3(0, 0, 2.5f), ShieldRotationSpeed * Time.deltaTime);
+                        if (Vector3.Distance(ShieldTrans.position, OuterCenter) > 2)
                         {
-                            Shield.transform.Translate(Vector3.forward * Time.deltaTime); //move away from player OT if within 5 units
+                            ShieldTrans.Translate(Vector3.forward * Time.deltaTime); //move away from player OT if within 5 units
                         }
                     }
                 }
@@ -108,30 +110,30 @@ public class AsteroidBehavoir : MonoBehaviour
         if (AsteroidSpawnCDTimer > AsteroidSpawnRate)
         {
             bool SpawnFailed = false;
-            float a = Mathf.Sqrt(Random.Range(0.075f, 6.75f)), b = Random.Range(0.0f, 80.0f), c = Random.Range(0.0f, 4.0f), d = Random.Range(-4.0f, 4.0f); //a velocity and size scale, b bytes, c spawn random, d spawn side pos/min variance
+            float a = Mathf.Sqrt(Random.Range(0.075f, 6.75f)), b = Random.Range(0.0f, 80.0f), c = Random.Range(0.0f, 4.0f), d = Random.Range(-4.0f, 4.0f), TX = transform.position.x, TY = transform.position.y; //a velocity and size scale, b bytes, c spawn random, d spawn side pos/min variance
             Vector3 SpawnPosition; //assigning random spawn pos
+            GameObject[] SnapShotArr = AsteroidList.ToArray();
             if (c <= 1)
             {
-                SpawnPosition = new Vector3(transform.position.x + d, (transform.position.y + 20), 0);
+                SpawnPosition = new Vector3(TX + d, (TY + 20), 0);
             }
             else if (c <= 2)
             {
-                SpawnPosition = new Vector3((transform.position.x + 20), transform.position.y + d, 0);
+                SpawnPosition = new Vector3((TX + 20), TY + d, 0);
             }
             else if (c <= 3)
             {
-                SpawnPosition = new Vector3(transform.position.x + d, (transform.position.y - 20), 0);
+                SpawnPosition = new Vector3(TX + d, (TY - 20), 0);
             }
             else
             {
-                SpawnPosition = new Vector3(transform.position.x - 20, (transform.position.y + d), 0);
+                SpawnPosition = new Vector3(TX - 20, (TY + d), 0);
             }
-            GameObject[] SnapShotArr = AsteroidList.ToArray();
             foreach (GameObject Astor in SnapShotArr)
             {
                 if (Astor != null)
                 {
-                    if (Vector3.Distance((Astor.GetComponent<Renderer>().bounds.center), SpawnPosition) <= Vector3.Distance(Astor.GetComponent<Renderer>().bounds.center, Astor.GetComponent<Renderer>().bounds.extents))
+                    if (Vector3.Distance(Astor.transform.position, SpawnPosition) < a / 100 + Astor.transform.localScale.magnitude)
                     {
                         SpawnFailed = true; //if any new asteroid will spawn inside a prexisting asteroid failspawn
                         SpawnAsteroid();
@@ -142,18 +144,18 @@ public class AsteroidBehavoir : MonoBehaviour
             {
                 GameObject Prefab = (Random.Range(0.0f, 100.0f) <= PowerUpSpawnRate) ? PowerUpPrefab : AsteroidPrefab; //if rand is less than powerupspawn rate prefab is powerupprefab else its asteroid prefab
                 GameObject Asteroid = (GameObject)Instantiate(Prefab, SpawnPosition, new Quaternion(0, 0, 0, 0));
-                AsteroidList.Add(Asteroid);
                 Rigidbody AstRB = Asteroid.GetComponent<Rigidbody>(); //this asteroids RB
+                AsteroidList.Add(Asteroid);
                 Asteroid.transform.localScale = Vector3.one * a / 100; //size scaled betw a rand
-                if (SpawnPosition.y == transform.position.y + 20)
+                if (SpawnPosition.y == TY + 20)
                 {
                     AstroidVelo = -transform.up * (VeloInc + 1) * 175 / Mathf.Sqrt(a);//velocity maths, larger asteroids spawn with smaller velocities, velo dir relative to spawnp
                 }
-                else if (SpawnPosition.y == transform.position.y - 20)
+                else if (SpawnPosition.y == TY - 20)
                 {
                     AstroidVelo = transform.up * (VeloInc + 1) * 175 / Mathf.Sqrt(a);
                 }
-                else if (SpawnPosition.x == transform.position.x + 20)
+                else if (SpawnPosition.x == TX + 20)
                 {
                     AstroidVelo = -transform.right * (VeloInc + 1) * 175 / Mathf.Sqrt(a);
                 }
@@ -169,14 +171,15 @@ public class AsteroidBehavoir : MonoBehaviour
                     b = Random.Range(0.0f, 80.0f);
                     mybyte = System.BitConverter.GetBytes(b);
                 }
+                Material AMat = Asteroid.GetComponent<Renderer>().material, BMat = Asteroid.transform.GetChild(0).GetComponent<Renderer>().material;
                 if (Asteroid.gameObject.tag == "Asteroid")
                 {
                     Color32 colorVar = new Color32(mybyte[1], mybyte[1], mybyte[1], mybyte[1]); //fiddy shades of kreygasm
                     PowerUpSpawnRate += 0.1f;
-                    Asteroid.GetComponent<Renderer>().material.color = colorVar; //set renderer colour
-                    Asteroid.GetComponent<Renderer>().material.shader = Shader.Find("Legacy Shaders/Decal"); //set shader type
-                    Asteroid.transform.GetChild(0).GetComponent<Renderer>().material.color = colorVar; //set renderer colour
-                    Asteroid.transform.GetChild(0).GetComponent<Renderer>().material.shader = Shader.Find("Legacy Shaders/Decal"); //set shader type
+                    AMat.color = colorVar; //set renderer colour
+                    AMat.shader = Shader.Find("Legacy Shaders/Decal"); //set shader type
+                    BMat.color = colorVar; //set renderer colour
+                    BMat.shader = Shader.Find("Legacy Shaders/Decal"); //set shader type
                 }
                 else if (Asteroid.gameObject.tag == "PowerUp")
                 {
@@ -185,8 +188,8 @@ public class AsteroidBehavoir : MonoBehaviour
                     Asteroid.transform.localScale = Vector3.one * a / 80;
                     Color32 colorVar = new Color32(mybyte[0], mybyte[1], mybyte[2], mybyte[3]); //any colour
                     AstRB.velocity = AstroidVelo / a;
-                    Asteroid.GetComponent<Renderer>().material.color = colorVar; //set renderer colour
-                    Asteroid.GetComponent<Renderer>().material.shader = Shader.Find("Standard"); //set shader type
+                    AMat.color = colorVar; //set renderer colour
+                    AMat.shader = Shader.Find("Standard"); //set shader type
                 }
                 AsteroidSpawnCDTimer = 0;
             }
@@ -243,10 +246,10 @@ public class AsteroidBehavoir : MonoBehaviour
     {
         if(Counter == 0 && ShieldList[0].activeSelf == true)
         {
-            ShieldList[0].transform.position = new Vector3(OuterCol.bounds.center.x + 2, OuterCol.bounds.center.y, OuterCol.bounds.center.z); //setting starting pos
-            ShieldList[1].transform.position = new Vector3(OuterCol.bounds.center.x - 2, OuterCol.bounds.center.y, OuterCol.bounds.center.z);
-            ShieldList[2].transform.position = new Vector3(OuterCol.bounds.center.x, OuterCol.bounds.center.y + 2, OuterCol.bounds.center.z);
-            ShieldList[3].transform.position = new Vector3(OuterCol.bounds.center.x, OuterCol.bounds.center.y - 2, OuterCol.bounds.center.z);
+            ShieldList[0].transform.position = new Vector3(OuterCenter.x + 2, OuterCenter.y, OuterCenter.z); //setting starting pos
+            ShieldList[1].transform.position = new Vector3(OuterCenter.x - 2, OuterCenter.y, OuterCenter.z);
+            ShieldList[2].transform.position = new Vector3(OuterCenter.x, OuterCenter.y + 2, OuterCenter.z);
+            ShieldList[3].transform.position = new Vector3(OuterCenter.x, OuterCenter.y - 2, OuterCenter.z);
         }
         Counter++;
     }
