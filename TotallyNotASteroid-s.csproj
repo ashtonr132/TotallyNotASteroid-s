@@ -229,6 +229,7 @@
     <Compile Include="Assets\Scripts\AsteroidDestroy.cs" />
     <Compile Include="Assets\Scripts\BackgroundLoop.cs" />
     <Compile Include="Assets\Scripts\BulletBehavoir.cs" />
+    <Compile Include="Assets\Scripts\MainMenuButtonFunctions.cs" />
     <Compile Include="Assets\Scripts\PlayerBehavoir.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

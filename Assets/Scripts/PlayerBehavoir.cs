@@ -7,9 +7,9 @@ using UnityEngine.UI;
 public class PlayerBehavoir : MonoBehaviour
 {
     private int asteroidsondeath = 0, PlayerHealth = 3, HighScore = 0, FireReps = 0, RunScore;
-    private GameObject EndUI, Score, Barrel, AsteroidHit, InstructionsUI, GameStartText, AmmoBar, HealthBar, Music, ExitGameButton;
+    private GameObject EndUI, Score, Barrel, AsteroidHit, InstructionsUI, GameStartText, AmmoBar, HealthBar, Music, ExitGameButton, PauseScreen, MusicVolSlider, SFXVolSlider;
     public GameObject BulletPrefab; // assign in inspector
-    private float BulletSize = 1, BulletMass = 1, ShotSpeed = 0.125f, BulletVelocityModifier = 0.75f, ShotCDTimer = 0, repeats = 0, AmmoRegenTimer = 0, MaxAmmo = 30, AmmoCount, BarrelMoveSpeed = 150, AmmoWait = 0.5f;
+    private float BulletSize = 1, BulletMass = 1, ShotSpeed = 0.125f, BulletVelocityModifier = 0.75f, ShotCDTimer = 0, repeats = 0, AmmoRegenTimer = 0, MaxAmmo = 30, AmmoCount, BarrelMoveSpeed = 150, AmmoWait = 0.5f, MusicVol = 1, SFXVol = 0.5f;
     private bool InvincibilityFrames = false, TripleShot = false;
     internal static bool GameStarted = false;
     internal float LastFrameTime, FakeDT;
@@ -30,13 +30,24 @@ public class PlayerBehavoir : MonoBehaviour
         Music = GameObject.Find("Music");
         ExitGameButton = GameObject.Find("Exit Game");
         ExitGameButton.GetComponent<Button>().onClick.AddListener(ExitGame);
-        ExitGameButton.SetActive(false);
         StartCoroutine(StartAudio()); //play music
         UpdateBarUI();
+        PauseScreen = GameObject.Find("Pause Screen");
+        MusicVolSlider = GameObject.Find("MusicVol");
+        SFXVolSlider = GameObject.Find("SFXVol");
+        MusicVolSlider.GetComponent<Slider>().value = MusicVol;
+        SFXVolSlider.GetComponent<Slider>().value = SFXVol;
+        PauseScreen.SetActive(false);
     }
 
     void Update()
     {
+        if (PauseScreen.activeSelf)
+        {
+            MusicVol = MusicVolSlider.GetComponent<Slider>().value;
+            SFXVol = SFXVolSlider.GetComponent<Slider>().value ;
+        }
+        Music.GetComponent<AudioSource>().volume = MusicVol;
         FakeDT = Time.realtimeSinceStartup - LastFrameTime; //realtimesincestartup isnt affected by timescale manipulation, this is accurate to 3decimal places, but isnt exactly the same as 
         if ((!GameStarted) && Input.anyKey) //player has started game
         {
@@ -50,11 +61,11 @@ public class PlayerBehavoir : MonoBehaviour
                 Time.timeScale = Time.timeScale == 1 ? 0 : 1; //ternary operator for the speed that time runs at
                 if (Time.timeScale == 0)
                 {
-                    ExitGameButton.SetActive(true);
+                    PauseScreen.SetActive(true);
                 }
                 else
                 {
-                    ExitGameButton.SetActive(false);
+                    PauseScreen.SetActive(false);
                 }
             }
             if (Time.timeScale != 0) //game isnt paused
@@ -66,10 +77,6 @@ public class PlayerBehavoir : MonoBehaviour
                 }
                 UpdateBarUI();
                 ShotCDTimer += Time.deltaTime; //shotspeed incrememnt
-                if (Time.time > 15)
-                {
-                    InstructionsUI.transform.position = Vector3.MoveTowards(InstructionsUI.transform.position, new Vector3(InstructionsUI.transform.position.x, InstructionsUI.transform.position.y + 20, InstructionsUI.transform.position.z), Time.deltaTime);
-                }
                 if (IsPlayerDead() == true) //do the end game ui's
                 {
                     NewHighScore();
@@ -112,7 +119,7 @@ public class PlayerBehavoir : MonoBehaviour
         if (col.gameObject.tag == "Asteroid" && InvincibilityFrames == false) //if player is hit
         {
             PlayerHealth--;
-            AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Hit"), GameObject.Find("Music").transform.position, 0.35f);
+            AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Hit"), GameObject.Find("Music").transform.position, 1 * SFXVol);
             AsteroidHit = col.gameObject;
             InvokeRepeating("DoneDamage", 0, 1); //asteroid flashes and loses its collider
             StartCoroutine(WaitFor(Vector3.zero, 0.5f, "InvincibilityFrames")); //cant get hit immediatly after getting hit
@@ -121,7 +128,7 @@ public class PlayerBehavoir : MonoBehaviour
 
     public void PowerUpEffect(Vector3 pos)
     {
-        AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Powerup"), GameObject.Find("Music").transform.position, 0.35f);
+        AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Powerup"), GameObject.Find("Music").transform.position, 1 * SFXVol);
         var x = UnityEngine.Random.Range(0, 10);
         switch (x)
         {
@@ -245,22 +252,6 @@ public class PlayerBehavoir : MonoBehaviour
     public IEnumerator WaitFor(Vector3 pos, float WaitTime = 0, string callref = "") //varios timed function calls
     {
         GetComponent<AsteroidBehavoir>().addScore((int)(Mathf.Abs(GetComponent<AsteroidBehavoir>().getScore() * 0.01f)));
-        if (pos.x < -423) //is poweruptext offscreen?
-        {
-            pos.x = -423;
-        }
-        else if (pos.x > -375)
-        {
-            pos.x = -375;
-        }
-        if (pos.y < -210)
-        {
-            pos.y = -210;
-        }
-        else if (pos.y > -235)
-        {
-            pos.y = -235;
-        }
         Quaternion quat;
         if (pos.y < transform.position.y)
         {
@@ -427,7 +418,7 @@ public class PlayerBehavoir : MonoBehaviour
     }
     internal void ExitGame()
     {
-        Application.Quit();
+        SceneManager.LoadScene(1);
     }
 }
 /* music;
