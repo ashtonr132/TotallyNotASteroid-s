@@ -7,17 +7,18 @@ using UnityEngine.UI;
 public class PlayerBehavoir : MonoBehaviour
 {
     private int asteroidsondeath = 0, PlayerHealth = 3, HighScore = 0, FireReps = 0, RunScore;
-    private GameObject EndUI, Score, Barrel, AsteroidHit, InstructionsUI, GameStartText, AmmoBar, HealthBar, Music;
+    private GameObject EndUI, Score, Barrel, AsteroidHit, InstructionsUI, GameStartText, AmmoBar, HealthBar, Music, ExitGameButton;
     public GameObject BulletPrefab; // assign in inspector
     private float BulletSize = 1, BulletMass = 1, ShotSpeed = 0.125f, BulletVelocityModifier = 0.75f, ShotCDTimer = 0, repeats = 0, AmmoRegenTimer = 0, MaxAmmo = 30, AmmoCount, BarrelMoveSpeed = 150, AmmoWait = 0.5f;
     private bool InvincibilityFrames = false, TripleShot = false;
     internal static bool GameStarted = false;
+    internal float LastFrameTime, FakeDT;
     private string SplashString;
 
     void Start()
     {
-        AmmoCount = MaxAmmo;
-        GameStartText = GameObject.Find("GameStartText");
+        AmmoCount = MaxAmmo; //set ammo
+        GameStartText = GameObject.Find("GameStartText"); //set refs
         EndUI = GameObject.Find("EndUI");
         InstructionsUI = GameObject.Find("InstructionsUI");
         Score = GameObject.Find("Score");
@@ -27,12 +28,16 @@ public class PlayerBehavoir : MonoBehaviour
         AmmoBar = GameObject.Find("GreenBackground");
         HealthBar = GameObject.Find("RedBackground");
         Music = GameObject.Find("Music");
-        StartCoroutine(StartAudio());
+        ExitGameButton = GameObject.Find("Exit Game");
+        ExitGameButton.GetComponent<Button>().onClick.AddListener(ExitGame);
+        ExitGameButton.SetActive(false);
+        StartCoroutine(StartAudio()); //play music
         UpdateBarUI();
     }
 
     void Update()
     {
+        FakeDT = Time.realtimeSinceStartup - LastFrameTime; //realtimesincestartup isnt affected by timescale manipulation, this is accurate to 3decimal places, but isnt exactly the same as 
         if ((!GameStarted) && Input.anyKey) //player has started game
         {
             GameStarted = (!GameStarted);
@@ -40,65 +45,77 @@ public class PlayerBehavoir : MonoBehaviour
         }
         if (GameStarted)
         {
-            if (Input.GetKey(KeyCode.Escape))
+            if (Input.GetKeyDown(KeyCode.Escape)) //pause the game
             {
-                Application.Quit();
-            }
-            AmmoRegenTimer += Time.deltaTime;
-            if (AmmoRegenTimer > AmmoWait && AmmoCount < MaxAmmo)
-            {
-                AmmoCount += 1f;
-            }
-            UpdateBarUI();
-            ShotCDTimer += Time.deltaTime; //shotspeed incrememnt
-            if (Time.time > 15)
-            {
-                InstructionsUI.transform.position = Vector3.MoveTowards(InstructionsUI.transform.position, new Vector3(InstructionsUI.transform.position.x, InstructionsUI.transform.position.y + 20, InstructionsUI.transform.position.z), Time.deltaTime);
-            }
-            if (IsPlayerDead() == true) //do the end game ui's
-            {
-                NewHighScore();
-                PlayEndScreen();
-            }
-            else
-            {
-                if (Input.GetKey(KeyCode.Space))
+                Time.timeScale = Time.timeScale == 1 ? 0 : 1; //ternary operator for the speed that time runs at
+                if (Time.timeScale == 0)
                 {
-                    Fire();
-                }
-                if (Input.GetKey(KeyCode.LeftArrow))
-                {
-                    Barrel.transform.RotateAround(GameObject.Find("outer").GetComponent<Collider>().bounds.center, Vector3.forward, BarrelMoveSpeed * Time.deltaTime); //move LR
-                    if (BarrelMoveSpeed < 450) // allows fast rotation without the loss of small movement accuracy
-                    {
-                        BarrelMoveSpeed += 10f;
-                    }
-                }
-                else if (Input.GetKey(KeyCode.RightArrow))
-                {
-                    Barrel.transform.RotateAround(GameObject.Find("outer").GetComponent<Collider>().bounds.center, -Vector3.forward, BarrelMoveSpeed * Time.deltaTime);
-                    if (BarrelMoveSpeed < 450)
-                    {
-                        BarrelMoveSpeed += 10f;
-                    }
+                    ExitGameButton.SetActive(true);
                 }
                 else
                 {
-                    BarrelMoveSpeed = 100;
+                    ExitGameButton.SetActive(false);
                 }
             }
+            if (Time.timeScale != 0) //game isnt paused
+            {
+                AmmoRegenTimer += Time.deltaTime; //wait for regen to start
+                if (AmmoRegenTimer > AmmoWait && AmmoCount < MaxAmmo) //start regening ammo
+                {
+                    AmmoCount += 1f;
+                }
+                UpdateBarUI();
+                ShotCDTimer += Time.deltaTime; //shotspeed incrememnt
+                if (Time.time > 15)
+                {
+                    InstructionsUI.transform.position = Vector3.MoveTowards(InstructionsUI.transform.position, new Vector3(InstructionsUI.transform.position.x, InstructionsUI.transform.position.y + 20, InstructionsUI.transform.position.z), Time.deltaTime);
+                }
+                if (IsPlayerDead() == true) //do the end game ui's
+                {
+                    NewHighScore();
+                    StartCoroutine(WaitFor(Vector3.zero, 10, "ResetScene"));
+                }
+                else
+                {
+                    if (Input.GetKey(KeyCode.Space))
+                    {
+                        Fire();
+                    }
+                    if (Input.GetKey(KeyCode.LeftArrow))
+                    {
+                        BarrelRotate(Vector3.forward);
+                    }
+                    else if (Input.GetKey(KeyCode.RightArrow))
+                    {
+                        BarrelRotate(-Vector3.forward);
+                    }
+                    else
+                    {
+                        BarrelMoveSpeed = 100;
+                    }
+                }
+            }
+        }
+        LastFrameTime = Time.realtimeSinceStartup; //last frame time ref
+    }
+    private void BarrelRotate(Vector3 Rd)
+    {
+        Barrel.transform.RotateAround(GameObject.Find("outer").GetComponent<Collider>().bounds.center, Rd, BarrelMoveSpeed * Time.deltaTime); //move barrel by move speed var
+        if (BarrelMoveSpeed < 450)
+        {
+            BarrelMoveSpeed += 15f;
         }
     }
 
     void OnCollisionEnter(Collision col)
     {
-        if (col.gameObject.tag == "Asteroid" && InvincibilityFrames == false)
+        if (col.gameObject.tag == "Asteroid" && InvincibilityFrames == false) //if player is hit
         {
             PlayerHealth--;
             AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Hit"), GameObject.Find("Music").transform.position, 0.35f);
             AsteroidHit = col.gameObject;
-            InvokeRepeating("DoneDamage", 0, 1);
-            StartCoroutine(WaitFor(Vector3.zero, 0.5f, "InvincibilityFrames"));
+            InvokeRepeating("DoneDamage", 0, 1); //asteroid flashes and loses its collider
+            StartCoroutine(WaitFor(Vector3.zero, 0.5f, "InvincibilityFrames")); //cant get hit immediatly after getting hit
         }
     }
 
@@ -109,12 +126,12 @@ public class PlayerBehavoir : MonoBehaviour
         switch (x)
         {
             case 0:
-                GetComponent<AsteroidBehavoir>().setScore((int)(Mathf.Abs(GetComponent<AsteroidBehavoir>().getScore() * 0.05f)));
+                GetComponent<AsteroidBehavoir>().addScore((int)(Mathf.Abs(GetComponent<AsteroidBehavoir>().getScore() * 0.05f))); //add score
                 SplashString = "More Points!";
                 StartCoroutine(WaitFor(pos));
                 break;
             case 1:
-                if (PlayerHealth < 5)
+                if (PlayerHealth < 5) //add max hp if not at maxhp
                 {
                     PlayerHealth++;
                     SplashString = "Health Up!";
@@ -123,7 +140,7 @@ public class PlayerBehavoir : MonoBehaviour
                 else PowerUpEffect(pos);
                 break;
             case 2:
-                for (var i = 0; i < 36; i++)
+                for (var i = 0; i < 36; i++) //spawn 36 projectiles in a circle
                 {
                     Vector3 pos1 = CircleSpawn(Vector3.zero, 3, i * 10); //shoots bullets in a circle around the player
                     Quaternion rot = Quaternion.FromToRotation(-Vector3.right, Vector3.zero - pos1);
@@ -135,16 +152,16 @@ public class PlayerBehavoir : MonoBehaviour
                 StartCoroutine(WaitFor(pos));
                 break;
             case 3:
-                InvokeRepeating("BulletRing", 0, 0.01f); //shoots bullets in a timed rotation
+                InvokeRepeating("BulletRing", 0, 0.03f); //shoots bullets in a timed rotation
                 SplashString = "Bullet Wave";
                 StartCoroutine(WaitFor(pos));
                 break;
             case 4:
-                SplashString = "Pack a Punch";
+                SplashString = "Pack a Punch"; //makes bullets large
                 StartCoroutine(WaitFor(pos, 3, "BigBullet"));
                 break;
             case 5:
-                SplashString = "TripleShot";
+                SplashString = "TripleShot"; //shoot triple shot for a short time
                 StartCoroutine(WaitFor(pos, 5, "TripleShot"));
                 break;
             case 6:
@@ -152,7 +169,7 @@ public class PlayerBehavoir : MonoBehaviour
                 StartCoroutine(WaitFor(pos, 5, "ShotSpeedUp"));
                 break;
             case 7:
-                foreach (GameObject Asteroid in GetComponent<AsteroidBehavoir>().GetList("Asteroid"))
+                foreach (GameObject Asteroid in GetComponent<AsteroidBehavoir>().GetList("Asteroid")) //freeze all asteroids
                 {
                     if (Asteroid != null)
                     {
@@ -164,12 +181,12 @@ public class PlayerBehavoir : MonoBehaviour
                 
                 break;
             case 8:
-                GetComponent<AsteroidBehavoir>().setShieldBool(true);
+                GetComponent<AsteroidBehavoir>().setShieldBool(true); //activate shield
                 SplashString = "Shield Activated";
                 StartCoroutine(WaitFor(pos));
                 break;
             case 9:
-                if (MaxAmmo < 45)
+                if (MaxAmmo < 45) //if not at max ammo add max ammo
                 {
                     MaxAmmo += 3;
                     SplashString = "Ammo Up!";
@@ -200,7 +217,7 @@ public class PlayerBehavoir : MonoBehaviour
         FireReps++;
         Bullet.GetComponent<Rigidbody>().velocity = Bullet.GetComponent<Rigidbody>().velocity / 5; //bullet ring fires slower bullets
         Destroy(Bullet, 2);
-        if (FireReps > 35)
+        if (FireReps >= 36)
         {
             CancelInvoke("BulletRing"); //stop calling the next rotation step change and fire at max firerepetitions
             FireReps = 0;
@@ -225,18 +242,10 @@ public class PlayerBehavoir : MonoBehaviour
             PlayerPrefs.SetInt("highscore", HighScore);
         }
     }
-
-    void PlayEndScreen() //display end info and start reset scene countdown
-    {
-        asteroidsondeath = gameObject.GetComponent<AsteroidBehavoir>().GetEvadedAsteroids();
-        EndUI.GetComponent<Text>().text = "Score : " + RunScore + System.Environment.NewLine + "Session HighScore : " + HighScore + System.Environment.NewLine + "Asteroids Cleared : " + asteroidsondeath;
-        StartCoroutine(WaitFor(Vector3.zero, 10, "ResetScene"));
-    }
-
     public IEnumerator WaitFor(Vector3 pos, float WaitTime = 0, string callref = "") //varios timed function calls
     {
-        GetComponent<AsteroidBehavoir>().setScore((int)(Mathf.Abs(GetComponent<AsteroidBehavoir>().getScore() * 0.01f)));
-        if (pos.x < -423)
+        GetComponent<AsteroidBehavoir>().addScore((int)(Mathf.Abs(GetComponent<AsteroidBehavoir>().getScore() * 0.01f)));
+        if (pos.x < -423) //is poweruptext offscreen?
         {
             pos.x = -423;
         }
@@ -255,18 +264,19 @@ public class PlayerBehavoir : MonoBehaviour
         Quaternion quat;
         if (pos.y < transform.position.y)
         {
-            quat = Quaternion.LookRotation(transform.forward, transform.position - pos);
+            quat = Quaternion.LookRotation(transform.forward, transform.position - pos); //rotate textbox
         }
         else
         {
             quat = Quaternion.LookRotation(transform.forward, pos - transform.position);
         }
-        
         GameObject SplashText = Instantiate((GameObject)Resources.Load("SplashText"), pos, quat , GameObject.Find("Canvas").transform);
         SplashText.GetComponent<Text>().text = SplashString;
         switch (callref)
         {
             case "ResetScene":
+                asteroidsondeath = gameObject.GetComponent<AsteroidBehavoir>().GetEvadedAsteroids();
+                EndUI.GetComponent<Text>().text = "Score : " + RunScore + System.Environment.NewLine + "Session HighScore : " + HighScore + System.Environment.NewLine + "Asteroids Cleared : " + asteroidsondeath;
                 yield return new WaitForSeconds(WaitTime);
                 GameStarted = false;
                 SceneManager.LoadScene("scene");
@@ -353,7 +363,7 @@ public class PlayerBehavoir : MonoBehaviour
     {
         return InvincibilityFrames;
     }
-    private void DoneDamage()
+    private void DoneDamage() //phase flash asteroid that hit you
     {
         repeats++;
         if (repeats < 6)
@@ -414,6 +424,10 @@ public class PlayerBehavoir : MonoBehaviour
             yield return new WaitForSeconds(music.clip.length);
         }
         StartCoroutine(StartAudio());
+    }
+    internal void ExitGame()
+    {
+        Application.Quit();
     }
 }
 /* music;

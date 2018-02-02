@@ -6,7 +6,7 @@ public class AsteroidBehavoir : MonoBehaviour
 {
     private int Score = 0, AsteroidsEvaded = 0;
     private float AsteroidSpawnRate = 3.5f, AsteroidSpawnCDTimer = 0, VeloInc = 0, PowerUpSpawnRate = 5.0f, Counter = 0, ShieldRotationSpeed = 0, x = 0;
-    public GameObject AsteroidPrefab, PowerUpPrefab; //set in inspector
+    private GameObject AsteroidPrefab, PowerUpPrefab; //set in inspector
     private bool ShieldActive = false;
     private GameObject InnerRing, OuterRing, scoreUI;
     private Vector3 AstroidVelo, OuterCenter;
@@ -15,6 +15,8 @@ public class AsteroidBehavoir : MonoBehaviour
     
     void Start()
     {
+        AsteroidPrefab = (GameObject)Resources.Load("AsteroidPrefab");
+        PowerUpPrefab = (GameObject)Resources.Load("PowerUpPrefab");
         scoreUI = GameObject.Find("Score");
         InnerRing = GameObject.Find("inner"); //of player ship
         OuterRing = GameObject.Find("outer");
@@ -39,7 +41,7 @@ public class AsteroidBehavoir : MonoBehaviour
     {
         if (PlayerBehavoir.GameStarted)
         {
-            if (GetComponent<PlayerBehavoir>().IsPlayerDead() == false)
+            if (GetComponent<PlayerBehavoir>().IsPlayerDead() == false && Time.timeScale != 0)
             {
                 Score++;
             }
@@ -146,6 +148,7 @@ public class AsteroidBehavoir : MonoBehaviour
                 GameObject Asteroid = (GameObject)Instantiate(Prefab, SpawnPosition, new Quaternion(0, 0, 0, 0));
                 Rigidbody AstRB = Asteroid.GetComponent<Rigidbody>(); //this asteroids RB
                 AsteroidList.Add(Asteroid);
+                Asteroid.name = Prefab.name + " " + AsteroidList.Count;
                 Asteroid.transform.localScale = Vector3.one * a / 100; //size scaled betw a rand
                 if (SpawnPosition.y == TY + 20)
                 {
@@ -171,13 +174,14 @@ public class AsteroidBehavoir : MonoBehaviour
                     b = Random.Range(0.0f, 80.0f);
                     mybyte = System.BitConverter.GetBytes(b);
                 }
-                Material AMat = Asteroid.GetComponent<Renderer>().material, BMat = Asteroid.transform.GetChild(0).GetComponent<Renderer>().material;
+                Material AMat = Asteroid.GetComponent<Renderer>().material;
                 if (Asteroid.gameObject.tag == "Asteroid")
                 {
                     Color32 colorVar = new Color32(mybyte[1], mybyte[1], mybyte[1], mybyte[1]); //fiddy shades of kreygasm
                     PowerUpSpawnRate += 0.1f;
                     AMat.color = colorVar; //set renderer colour
                     AMat.shader = Shader.Find("Legacy Shaders/Decal"); //set shader type
+                    Material BMat = Asteroid.transform.GetChild(0).GetComponent<Renderer>().material;
                     BMat.color = colorVar; //set renderer colour
                     BMat.shader = Shader.Find("Legacy Shaders/Decal"); //set shader type
                 }
@@ -213,7 +217,7 @@ public class AsteroidBehavoir : MonoBehaviour
         return Score;
     }
 
-    public void setScore(int scorein)
+    public void addScore(int scorein)
     {
         if (gameObject.GetComponent<PlayerBehavoir>().IsPlayerDead() == false)
         {
