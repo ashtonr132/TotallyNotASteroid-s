@@ -95,11 +95,6 @@
         <para>Object representing a group in the mixer.</para>
       </summary>
     </member>
-    <member name="T:UnityEngine.Audio.AudioMixerPlayable">
-      <summary>
-        <para>An implementation of IPlayable that controls an audio mixer.</para>
-      </summary>
-    </member>
     <member name="T:UnityEngine.Audio.AudioMixerSnapshot">
       <summary>
         <para>Object representing a snapshot in the mixer.</para>

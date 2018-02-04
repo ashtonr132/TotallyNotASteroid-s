@@ -1786,7 +1786,7 @@
     </member>
     <member name="P:UnityEngine.AnimatorTransitionInfo.fullPathHash">
       <summary>
-        <para>The unique name of the Transition.</para>
+        <para>The hash name of the Transition.</para>
       </summary>
     </member>
     <member name="P:UnityEngine.AnimatorTransitionInfo.nameHash">

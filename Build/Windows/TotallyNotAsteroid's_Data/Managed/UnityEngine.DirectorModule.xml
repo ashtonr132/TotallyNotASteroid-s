@@ -54,6 +54,11 @@
         <para>The PlayableGraph created by the PlayableDirector.</para>
       </summary>
     </member>
+    <member name="P:UnityEngine.Playables.PlayableDirector.playOnAwake">
+      <summary>
+        <para>Whether the playable asset will start playing back as soon as the component awakes.</para>
+      </summary>
+    </member>
     <member name="P:UnityEngine.Playables.PlayableDirector.state">
       <summary>
         <para>The current playing state of the component. (Read Only)</para>
@@ -123,6 +128,11 @@
       </summary>
       <param name="asset">An asset to instantiate a playable from.</param>
       <param name="mode">What to do when the time passes the duration of the playable.</param>
+    </member>
+    <member name="M:UnityEngine.Playables.PlayableDirector.RebuildGraph">
+      <summary>
+        <para>Discards the existing PlayableGraph and creates a new instance.</para>
+      </summary>
     </member>
     <member name="M:UnityEngine.Playables.PlayableDirector.Resume">
       <summary>
