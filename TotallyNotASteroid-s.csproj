@@ -310,6 +310,7 @@
     <Compile Include="Assets\Scripts\AsteroidDestroy.cs" />
     <Compile Include="Assets\Scripts\BackgroundLoop.cs" />
     <Compile Include="Assets\Scripts\BulletBehavoir.cs" />
+    <Compile Include="Assets\Scripts\CanvasToResolution.cs" />
     <Compile Include="Assets\Scripts\MainMenuButtonFunctions.cs" />
     <Compile Include="Assets\Scripts\PlayerBehavoir.cs" />
     <Compile Include="Assets\Scripts\ResScaler.cs" />
