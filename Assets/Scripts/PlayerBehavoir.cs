@@ -3,15 +3,17 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.Linq;
 
 public class PlayerBehavoir : MonoBehaviour
 {
-    private int asteroidsondeath = 0, PlayerHealth = 3, HighScore = 0, FireReps = 0, RunScore;
-    private GameObject EndUI, Score, Barrel, AsteroidHit, InstructionsUI, GameStartText, AmmoBar, HealthBar, Music, ExitGameButton, PauseScreen, MusicVolSlider, SFXVolSlider;
+    private int asteroidsondeath = 0, PlayerHealth = 3, FireReps = 0;
+    private GameObject EndUI, Score, Barrel, AsteroidHit, InstructionsUI, GameStartText, AmmoBar, HealthBar, Music, ExitGameButton, PauseScreen, MusicVolSlider, SFXVolSlider, Tips;
     public GameObject BulletPrefab; // assign in inspector
-    private float BulletSize = 1, BulletMass = 1, ShotSpeed = 0.125f, BulletVelocityModifier = 0.75f, ShotCDTimer = 0, repeats = 0, AmmoRegenTimer = 0, MaxAmmo = 30, AmmoCount, BarrelMoveSpeed = 150, AmmoWait = 0.5f, MusicVol = 1, SFXVol = 0.5f;
+    private float BulletSize = 1, BulletMass = 1, ShotSpeed = 0.125f, BulletVelocityModifier = 0.75f, ShotCDTimer = 0, repeats = 0, AmmoRegenTimer = 0, MaxAmmo = 30, AmmoCount, BarrelMoveSpeed = 150, AmmoWait = 0.5f;
     private bool InvincibilityFrames = false, TripleShot = false;
     internal static bool GameStarted = false;
+    internal bool ResettingScene = false;
     internal float LastFrameTime, FakeDT;
     private string SplashString;
 
@@ -20,11 +22,10 @@ public class PlayerBehavoir : MonoBehaviour
         AmmoCount = MaxAmmo; //set ammo
         GameStartText = GameObject.Find("GameStartText"); //set refs
         EndUI = GameObject.Find("EndUI");
-        InstructionsUI = GameObject.Find("InstructionsUI");
+        InstructionsUI = GameObject.Find("Instructions");
         Score = GameObject.Find("Score");
         Barrel = GameObject.Find("Barrel");
         EndUI.GetComponent<Text>().text = string.Empty; //initialised as blank to get rid of the filler text
-        HighScore = PlayerPrefs.GetInt("highscore"); //playerprefs persist through scene reloads
         AmmoBar = GameObject.Find("GreenBackground");
         HealthBar = GameObject.Find("RedBackground");
         Music = GameObject.Find("Music");
@@ -35,8 +36,10 @@ public class PlayerBehavoir : MonoBehaviour
         PauseScreen = GameObject.Find("Pause Screen");
         MusicVolSlider = GameObject.Find("MusicVol");
         SFXVolSlider = GameObject.Find("SFXVol");
-        MusicVolSlider.GetComponent<Slider>().value = MusicVol;
-        SFXVolSlider.GetComponent<Slider>().value = SFXVol;
+        MusicVolSlider.GetComponent<Slider>().value = SaveLoad.musicVol;
+        SFXVolSlider.GetComponent<Slider>().value = SaveLoad.fXVol;
+        Tips = GameObject.Find("Tips");
+        Tips.SetActive(false);
         PauseScreen.SetActive(false);
     }
 
@@ -44,10 +47,10 @@ public class PlayerBehavoir : MonoBehaviour
     {
         if (PauseScreen.activeSelf)
         {
-            MusicVol = MusicVolSlider.GetComponent<Slider>().value;
-            SFXVol = SFXVolSlider.GetComponent<Slider>().value ;
+            SaveLoad.musicVol = MusicVolSlider.GetComponent<Slider>().value;
+            SaveLoad.fXVol = SFXVolSlider.GetComponent<Slider>().value;
         }
-        Music.GetComponent<AudioSource>().volume = MusicVol;
+        Music.GetComponent<AudioSource>().volume = SaveLoad.musicVol;
         FakeDT = Time.realtimeSinceStartup - LastFrameTime; //realtimesincestartup isnt affected by timescale manipulation, this is accurate to 3decimal places, but isnt exactly the same as 
         if ((!GameStarted) && Input.anyKey) //player has started game
         {
@@ -61,15 +64,25 @@ public class PlayerBehavoir : MonoBehaviour
                 Time.timeScale = Time.timeScale == 1 ? 0 : 1; //ternary operator for the speed that time runs at
                 if (Time.timeScale == 0)
                 {
-                    PauseScreen.SetActive(true);
+                    if (InstructionsUI.transform.position.y > 20)
+                    {
+                        PauseScreen.SetActive(true);
+                    }
+                    Tips.GetComponent<Text>().text = GetTip();
+                    Tips.SetActive(true);
                 }
                 else
                 {
                     PauseScreen.SetActive(false);
+                    Tips.SetActive(false);
                 }
             }
             if (Time.timeScale != 0) //game isnt paused
             {
+                if (InstructionsUI.transform.position.y < 20)
+                {   
+                    InstructionsUI.transform.position += Vector3.up / 50;
+                }
                 AmmoRegenTimer += Time.deltaTime; //wait for regen to start
                 if (AmmoRegenTimer > AmmoWait && AmmoCount < MaxAmmo) //start regening ammo
                 {
@@ -77,10 +90,9 @@ public class PlayerBehavoir : MonoBehaviour
                 }
                 UpdateBarUI();
                 ShotCDTimer += Time.deltaTime; //shotspeed incrememnt
-                if (IsPlayerDead() == true) //do the end game ui's
+                if (IsPlayerDead() == true && ResettingScene == false) //do the end game ui's
                 {
-                    NewHighScore();
-                    StartCoroutine(WaitFor(Vector3.zero, 10, "ResetScene"));
+                    StartCoroutine(WaitFor(10, "ResetScene"));
                 }
                 else
                 {
@@ -113,36 +125,52 @@ public class PlayerBehavoir : MonoBehaviour
             BarrelMoveSpeed += 15f;
         }
     }
+    private string GetTip()
+    {
+        switch (Random.Range(0, 5)) //although this is a extent of 6, the integer function of random range is (inclusive, exclusive) 
+        {
+            case 0:
+                return "Asteroid Fragments are too small to damage your ship.";
+            case 1:
+                return "Push asteroids as far away as possible for the best odds of survival."; //tips should be no longer than this
+            case 2:
+                return "Increased fire rate also makes your ammo infinite";
+            case 3:
+                return "Triple Shot decreases the ammo loss rate by exactly 1/3.";
+            default:
+                return "Aim for coloured powerups.";
+        }
+    }
 
     void OnCollisionEnter(Collision col)
     {
         if (col.gameObject.tag == "Asteroid" && InvincibilityFrames == false) //if player is hit
         {
             PlayerHealth--;
-            AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Hit"), GameObject.Find("Music").transform.position, 1 * SFXVol);
+            AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Hit"), GameObject.Find("Music").transform.position, 1 * SaveLoad.fXVol);
             AsteroidHit = col.gameObject;
             InvokeRepeating("DoneDamage", 0, 1); //asteroid flashes and loses its collider
-            StartCoroutine(WaitFor(Vector3.zero, 0.5f, "InvincibilityFrames")); //cant get hit immediatly after getting hit
+            StartCoroutine(WaitFor(0.5f, "InvincibilityFrames")); //cant get hit immediatly after getting hit
         }
     }
 
     public void PowerUpEffect(Vector3 pos)
     {
-        AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Powerup"), GameObject.Find("Music").transform.position, 1 * SFXVol);
+        AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Powerup"), GameObject.Find("Music").transform.position, 1 * SaveLoad.fXVol);
         var x = UnityEngine.Random.Range(0, 10);
         switch (x)
         {
             case 0:
                 GetComponent<AsteroidBehavoir>().addScore((int)(Mathf.Abs(GetComponent<AsteroidBehavoir>().getScore() * 0.05f))); //add score
                 SplashString = "More Points!";
-                StartCoroutine(WaitFor(pos));
+                StartCoroutine(DoSplash(pos));
                 break;
             case 1:
                 if (PlayerHealth < 5) //add max hp if not at maxhp
                 {
                     PlayerHealth++;
                     SplashString = "Health Up!";
-                    StartCoroutine(WaitFor(pos));
+                    StartCoroutine(DoSplash(pos));
                 }
                 else PowerUpEffect(pos);
                 break;
@@ -156,24 +184,27 @@ public class PlayerBehavoir : MonoBehaviour
                     Destroy(Bullet, 2);
                 }
                 SplashString = "Bullet Blitz";
-                StartCoroutine(WaitFor(pos));
+                StartCoroutine(DoSplash(pos));
                 break;
             case 3:
                 InvokeRepeating("BulletRing", 0, 0.03f); //shoots bullets in a timed rotation
                 SplashString = "Bullet Wave";
-                StartCoroutine(WaitFor(pos));
+                StartCoroutine(DoSplash(pos));
                 break;
             case 4:
                 SplashString = "Pack a Punch"; //makes bullets large
-                StartCoroutine(WaitFor(pos, 3, "BigBullet"));
+                StartCoroutine(WaitFor(3, "BigBullet"));
+                StartCoroutine(DoSplash(pos));
                 break;
             case 5:
                 SplashString = "TripleShot"; //shoot triple shot for a short time
-                StartCoroutine(WaitFor(pos, 5, "TripleShot"));
+                StartCoroutine(WaitFor(5, "TripleShot"));
+                StartCoroutine(DoSplash(pos));
                 break;
             case 6:
                 SplashString = "ShotSpeedUp";
-                StartCoroutine(WaitFor(pos, 5, "ShotSpeedUp"));
+                StartCoroutine(WaitFor(5, "ShotSpeedUp"));
+                StartCoroutine(DoSplash(pos));
                 break;
             case 7:
                 foreach (GameObject Asteroid in GetComponent<AsteroidBehavoir>().GetList("Asteroid")) //freeze all asteroids
@@ -184,26 +215,25 @@ public class PlayerBehavoir : MonoBehaviour
                     }
                 }
                 SplashString = "Freeze";
-                StartCoroutine(WaitFor(pos));
-                
+                StartCoroutine(DoSplash(pos));
+
                 break;
             case 8:
                 GetComponent<AsteroidBehavoir>().setShieldBool(true); //activate shield
                 SplashString = "Shield Activated";
-                StartCoroutine(WaitFor(pos));
+                StartCoroutine(DoSplash(pos));
                 break;
             case 9:
                 if (MaxAmmo < 45) //if not at max ammo add max ammo
                 {
                     MaxAmmo += 3;
                     SplashString = "Ammo Up!";
-                    StartCoroutine(WaitFor(pos));
+                    StartCoroutine(DoSplash(pos));
                 }
                 else PowerUpEffect(pos);
                 break;
             default:
-                SplashString = "error in powerupeffect";
-                StartCoroutine(WaitFor(Vector3.zero));
+                SplashString = "Error in power up effect";
                 break;
         }
     }
@@ -235,7 +265,6 @@ public class PlayerBehavoir : MonoBehaviour
     {
         if (PlayerHealth <= 0)
         {
-            RunScore = gameObject.GetComponent<AsteroidBehavoir>().getScore(); //get score on death, stops update mistakes, afterdeath
             return true;
         }
         return false;
@@ -243,34 +272,36 @@ public class PlayerBehavoir : MonoBehaviour
 
     private void NewHighScore()
     {
-        if (RunScore > HighScore)
-        {
-            HighScore = RunScore;
-            PlayerPrefs.SetInt("highscore", HighScore);
-        }
+        SaveLoad.scores.Add(gameObject.GetComponent<AsteroidBehavoir>().getScore());
     }
-    public IEnumerator WaitFor(Vector3 pos, float WaitTime = 0, string callref = "") //varios timed function calls
+    internal IEnumerator DoSplash(Vector3 pos)
     {
-        GetComponent<AsteroidBehavoir>().addScore((int)(Mathf.Abs(GetComponent<AsteroidBehavoir>().getScore() * 0.01f)));
-        Quaternion quat;
-        if (pos.y < transform.position.y)
-        {
-            quat = Quaternion.LookRotation(transform.forward, transform.position - pos); //rotate textbox
-        }
-        else
-        {
-            quat = Quaternion.LookRotation(transform.forward, pos - transform.position);
-        }
-        GameObject SplashText = Instantiate((GameObject)Resources.Load("SplashText"), pos, quat , GameObject.Find("Canvas").transform);
-        SplashText.GetComponent<Text>().text = SplashString;
+            Quaternion quat;
+            if (pos.y < transform.position.y)
+            {
+                quat = Quaternion.LookRotation(transform.forward, transform.position - pos); //rotate textbox
+            }
+            else
+            {
+                quat = Quaternion.LookRotation(transform.forward, pos - transform.position);
+            }
+            GameObject SplashText = Instantiate((GameObject)Resources.Load("SplashText"), pos, quat, GameObject.Find("Canvas").transform);
+            SplashText.GetComponent<Text>().text = SplashString;
+            yield return new WaitForSeconds(3f);
+            Destroy(SplashText);
+    }
+    public IEnumerator WaitFor(float WaitTime = 0, string callref = "") //varios timed function calls
+    {
         switch (callref)
         {
             case "ResetScene":
+                ResettingScene = true;
                 asteroidsondeath = gameObject.GetComponent<AsteroidBehavoir>().GetEvadedAsteroids();
-                EndUI.GetComponent<Text>().text = "Score : " + RunScore + System.Environment.NewLine + "Session HighScore : " + HighScore + System.Environment.NewLine + "Asteroids Cleared : " + asteroidsondeath;
+                EndUI.GetComponent<Text>().text = "Score : " + gameObject.GetComponent<AsteroidBehavoir>().getScore() + System.Environment.NewLine + "Asteroids Cleared : " + asteroidsondeath + System.Environment.NewLine + "Restarting Game...";
+                NewHighScore();
                 yield return new WaitForSeconds(WaitTime);
                 GameStarted = false;
-                SceneManager.LoadScene("scene");
+                SceneManager.LoadScene("Play");
                 break;
             case ("InvincibilityFrames"):
                 InvincibilityFrames = true;
@@ -302,11 +333,6 @@ public class PlayerBehavoir : MonoBehaviour
                 break;
             default:
                 break;
-        }
-        yield return new WaitForSeconds(3f);
-        if (SplashText != null)
-        {   
-            Destroy(SplashText);
         }
     }
     internal IEnumerator FadeOut(GameObject FadeMe, float WaitTime) //slowly up the transparency value of an object until it is transparent then destroy it
@@ -418,7 +444,10 @@ public class PlayerBehavoir : MonoBehaviour
     }
     internal void ExitGame()
     {
-        SceneManager.LoadScene(1);
+        SaveLoad.Save();
+        GameStarted = false;
+        Time.timeScale = 1;
+        SceneManager.LoadScene("MainMenu");
     }
 }
 /* music;
