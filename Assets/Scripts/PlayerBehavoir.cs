@@ -66,10 +66,10 @@ public class PlayerBehavoir : MonoBehaviour
                 {
                     if (InstructionsUI.transform.position.y > 20)
                     {
-                        PauseScreen.SetActive(true);
+                        Tips.GetComponent<Text>().text = GetTip();
+                        Tips.SetActive(true);
                     }
-                    Tips.GetComponent<Text>().text = GetTip();
-                    Tips.SetActive(true);
+                    PauseScreen.SetActive(true);
                 }
                 else
                 {
@@ -436,9 +436,12 @@ public class PlayerBehavoir : MonoBehaviour
         AudioSource music = Music.GetComponent<AudioSource>();
         foreach (var track in Resources.LoadAll("Music", typeof(AudioClip)))
         {
+            if (track.name != "GalacticTemple")
+            {
             music.clip = ((AudioClip)track);
             music.Play();
             yield return new WaitForSeconds(music.clip.length);
+            }
         }
         StartCoroutine(StartAudio());
     }
@@ -450,14 +453,3 @@ public class PlayerBehavoir : MonoBehaviour
         SceneManager.LoadScene("MainMenu");
     }
 }
-/* music;
- * space-boss-battle-theme Matthew Pablo
- * wheres-my-spaceship spuispuin
- * spacebossbattle Hitctrl
- * hypersspace MidFag
- * less-appealing Macro
- * through-space maxstack
- * space-music mrpoly
- * misc sound effects;
- * 8-bit-sound-effect-pack-vol-001 Xenocity
- */
