@@ -58,13 +58,20 @@ public class MainMenuButtonFunctions : MonoBehaviour {
                 }
                 AdditionalText.text = string.Empty;
                 AdditionalText.text = "HighScores!";
-                SaveLoad.scores.Sort();
-                for (int i = SaveLoad.scores.Count - 1, j = 1; i >= 0; i--, j++)
+                if (SaveLoad.scores != null)
                 {
-                    if (j < 21)
+                    SaveLoad.scores.Sort();
+                    for (int i = SaveLoad.scores.Count - 1, j = 1; i >= 0; i--, j++)
                     {
-                        AdditionalText.text += System.Environment.NewLine + j + ". " + Mathf.Round(SaveLoad.scores[i]);
+                        if (j < 21)
+                        {
+                            AdditionalText.text += System.Environment.NewLine + j + ". " + Mathf.Round(SaveLoad.scores[i]);
+                        }
                     }
+                }
+                else
+                {
+                    SaveLoad.Load();
                 }
                 if (AdditionalText.text == "HighScores!")
                 {

@@ -5,11 +5,11 @@ using System.Collections.Generic;
 public class AsteroidBehavoir : MonoBehaviour
 {
     private int Score = 0, AsteroidsEvaded = 0;
-    private float AsteroidSpawnRate = 3.5f, AsteroidSpawnCDTimer = 0, VeloInc = 0, PowerUpSpawnRate = 5.0f, Counter = 0, ShieldRotationSpeed = 0, x = 0;
+    private float AsteroidSpawnRate = 3.5f, AsteroidSpawnCDTimer = 0, VeloInc = 1.25f, PowerUpSpawnRate = 5.0f, Counter = 0, ShieldRotationSpeed = 0, x = 0;
     private GameObject AsteroidPrefab, PowerUpPrefab; //set in inspector
     private bool ShieldActive = false;
     private GameObject InnerRing, OuterRing, scoreUI;
-    private Vector3 AstroidVelo, OuterCenter;
+    private Vector3 OuterCenter;
     private Collider OuterCol;
     private List<GameObject> AsteroidList = new List<GameObject>(), ShieldList = new List<GameObject>();
     
@@ -112,25 +112,9 @@ public class AsteroidBehavoir : MonoBehaviour
         if (AsteroidSpawnCDTimer > AsteroidSpawnRate)
         {
             bool SpawnFailed = false;
-            float a = Mathf.Sqrt(Random.Range(0.075f, 6.75f)), b = Random.Range(0.0f, 80.0f), c = Random.Range(0.0f, 4.0f), d = Random.Range(-4.0f, 4.0f), TX = transform.position.x, TY = transform.position.y; //a velocity and size scale, b bytes, c spawn random, d spawn side pos/min variance
-            Vector3 SpawnPosition; //assigning random spawn pos
+            float a = Mathf.Sqrt(Random.Range(0.5f, 6.125f)), b = Random.Range(0.0f, 80.0f); //a velocity and size scale, b bytes, c spawn random, d spawn side pos/min variance
+            Vector3 SpawnPosition = transform.position + (Vector3)Random.insideUnitCircle.normalized * 32;
             GameObject[] SnapShotArr = AsteroidList.ToArray();
-            if (c <= 1)
-            {
-                SpawnPosition = new Vector3(TX + d, (TY + 20), 0);
-            }
-            else if (c <= 2)
-            {
-                SpawnPosition = new Vector3((TX + 20), TY + d, 0);
-            }
-            else if (c <= 3)
-            {
-                SpawnPosition = new Vector3(TX + d, (TY - 20), 0);
-            }
-            else
-            {
-                SpawnPosition = new Vector3(TX - 20, (TY + d), 0);
-            }
             foreach (GameObject Astor in SnapShotArr)
             {
                 if (Astor != null)
@@ -146,28 +130,13 @@ public class AsteroidBehavoir : MonoBehaviour
             {
                 GameObject Prefab = (Random.Range(0.0f, 100.0f) <= PowerUpSpawnRate) ? PowerUpPrefab : AsteroidPrefab; //if rand is less than powerupspawn rate prefab is powerupprefab else its asteroid prefab
                 GameObject Asteroid = (GameObject)Instantiate(Prefab, SpawnPosition, new Quaternion(0, 0, 0, 0));
+                addEvadedAsteroids();
                 Rigidbody AstRB = Asteroid.GetComponent<Rigidbody>(); //this asteroids RB
                 AsteroidList.Add(Asteroid);
                 Asteroid.name = Prefab.name + " " + AsteroidList.Count;
                 Asteroid.transform.localScale = Vector3.one * a / 100; //size scaled betw a rand
-                if (SpawnPosition.y == TY + 20)
-                {
-                    AstroidVelo = -transform.up * (VeloInc + 1) * 175 / Mathf.Sqrt(a);//velocity maths, larger asteroids spawn with smaller velocities, velo dir relative to spawnp
-                }
-                else if (SpawnPosition.y == TY - 20)
-                {
-                    AstroidVelo = transform.up * (VeloInc + 1) * 175 / Mathf.Sqrt(a);
-                }
-                else if (SpawnPosition.x == TX + 20)
-                {
-                    AstroidVelo = -transform.right * (VeloInc + 1) * 175 / Mathf.Sqrt(a);
-                }
-                else
-                {
-                    AstroidVelo = transform.right * (VeloInc + 1) * 175 / Mathf.Sqrt(a);
-                }
                 AstRB.mass = 115 * a;
-                AstRB.velocity = (AstroidVelo + ((transform.position - Asteroid.transform.position).normalized)) / AstRB.mass;
+                AstRB.velocity = (((transform.position + (Vector3)Random.insideUnitCircle.normalized * Random.Range(0, 18)) - SpawnPosition) * VeloInc / (Mathf.Sqrt(a) * AstRB.mass)) * (VeloInc * (Random.Range(70, 100)/10));
                 byte[] mybyte = System.BitConverter.GetBytes(b); //color variance via bits from rand float
                 while (mybyte[1] < 20 || mybyte[1] > 50) //is too dark or too light? reroll
                 {
@@ -191,7 +160,6 @@ public class AsteroidBehavoir : MonoBehaviour
                     a = Random.Range(65.0f, 85.0f); //redeclar a for powerup physics
                     Asteroid.transform.localScale = Vector3.one * a / 80;
                     Color32 colorVar = new Color32(mybyte[0], mybyte[1], mybyte[2], mybyte[3]); //any colour
-                    AstRB.velocity = AstroidVelo / a;
                     AMat.color = colorVar; //set renderer colour
                     AMat.shader = Shader.Find("Standard"); //set shader type
                 }
@@ -205,10 +173,10 @@ public class AsteroidBehavoir : MonoBehaviour
     }
     private void DifficultyAdd()
     {
-        if (AsteroidSpawnRate > 0.7f)
+        if (AsteroidSpawnRate > 0.5f)
         {
             AsteroidSpawnRate -= 0.1f; //shorter spawn gap
-            VeloInc = +0.05f; //spawn higher velo
+            VeloInc += 0.05f; //spawn higher velo
         }
     }
 

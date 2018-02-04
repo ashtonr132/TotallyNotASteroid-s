@@ -17,7 +17,7 @@ public class AsteroidDestroy : MonoBehaviour
         Vector3 pos = transform.position; //cannot assign directly to the position in this case
         pos.z = 0;
         transform.position = pos;
-        if (Vector3.Distance(Player.transform.position, transform.position) > 22) //destroy if out of game range
+        if (Vector3.Distance(Player.transform.position, transform.position) > 35) //destroy if out of game range
         {
             List<GameObject> newlist = astbehav.GetList("Asteroid");
             astbehav.addEvadedAsteroids();

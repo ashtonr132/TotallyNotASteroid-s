@@ -20,7 +20,7 @@ public class PlayerBehavoir : MonoBehaviour
     void Start()
     {
         AmmoCount = MaxAmmo; //set ammo
-        GameStartText = GameObject.Find("GameStartText"); //set refs
+        GameStartText = GameObject.Find("Start"); //set refs
         EndUI = GameObject.Find("EndUI");
         InstructionsUI = GameObject.Find("Instructions");
         Score = GameObject.Find("Score");
@@ -64,7 +64,7 @@ public class PlayerBehavoir : MonoBehaviour
                 Time.timeScale = Time.timeScale == 1 ? 0 : 1; //ternary operator for the speed that time runs at
                 if (Time.timeScale == 0)
                 {
-                    if (InstructionsUI.transform.position.y > 20)
+                    if (InstructionsUI.transform.position.y > 40)
                     {
                         Tips.GetComponent<Text>().text = GetTip();
                         Tips.SetActive(true);
@@ -79,7 +79,7 @@ public class PlayerBehavoir : MonoBehaviour
             }
             if (Time.timeScale != 0) //game isnt paused
             {
-                if (InstructionsUI.transform.position.y < 20)
+                if (InstructionsUI.transform.position.y < 40)
                 {   
                     InstructionsUI.transform.position += Vector3.up / 50;
                 }
@@ -177,8 +177,8 @@ public class PlayerBehavoir : MonoBehaviour
             case 2:
                 for (var i = 0; i < 36; i++) //spawn 36 projectiles in a circle
                 {
-                    Vector3 pos1 = CircleSpawn(Vector3.zero, 3, i * 10); //shoots bullets in a circle around the player
-                    Quaternion rot = Quaternion.FromToRotation(-Vector3.right, Vector3.zero - pos1);
+                    Vector3 pos1 = CircleSpawn(transform.position, 3, i * 10); //shoots bullets in a circle around the player
+                    Quaternion rot = Quaternion.FromToRotation(-transform.right, transform.position - pos1);
                     GameObject Bullet = (GameObject)Instantiate(BulletPrefab, pos1, rot);
                     BulletCharacteristics(Bullet);
                     Destroy(Bullet, 2);
@@ -187,7 +187,7 @@ public class PlayerBehavoir : MonoBehaviour
                 StartCoroutine(DoSplash(pos));
                 break;
             case 3:
-                InvokeRepeating("BulletRing", 0, 0.03f); //shoots bullets in a timed rotation
+                StartCoroutine(BulletRing(Random.Range(1, 5))); //shoots bullets in a timed rotation
                 SplashString = "Bullet Wave";
                 StartCoroutine(DoSplash(pos));
                 break;
@@ -216,7 +216,6 @@ public class PlayerBehavoir : MonoBehaviour
                 }
                 SplashString = "Freeze";
                 StartCoroutine(DoSplash(pos));
-
                 break;
             case 8:
                 GetComponent<AsteroidBehavoir>().setShieldBool(true); //activate shield
@@ -247,17 +246,16 @@ public class PlayerBehavoir : MonoBehaviour
         return pos;
     }
 
-    void BulletRing()
+    IEnumerator BulletRing(int reps)
     {
-        var Bullet = (GameObject)Instantiate(BulletPrefab, CircleSpawn(Vector3.zero, 3, FireReps * 10), Quaternion.FromToRotation(-Vector3.right, Vector3.zero - CircleSpawn(Vector3.zero, 3, FireReps * 10)));
-        BulletCharacteristics(Bullet);
-        FireReps++;
-        Bullet.GetComponent<Rigidbody>().velocity = Bullet.GetComponent<Rigidbody>().velocity / 5; //bullet ring fires slower bullets
-        Destroy(Bullet, 2);
-        if (FireReps >= 36)
+        for (int i = 0; i < reps*36; i++)
         {
-            CancelInvoke("BulletRing"); //stop calling the next rotation step change and fire at max firerepetitions
-            FireReps = 0;
+            yield return new WaitForSeconds(reps / reps *36);
+            var Bullet = (GameObject)Instantiate(BulletPrefab, CircleSpawn(transform.position, 3, FireReps * 10), Quaternion.FromToRotation(-transform.right, transform.position - CircleSpawn(transform.position, 3, FireReps * 10)));
+            BulletCharacteristics(Bullet);
+            FireReps++;
+            Bullet.GetComponent<Rigidbody>().velocity = Bullet.GetComponent<Rigidbody>().velocity / 5; //bullet ring fires slower bullets
+            Destroy(Bullet, 2);
         }
     }
 
@@ -272,23 +270,31 @@ public class PlayerBehavoir : MonoBehaviour
 
     private void NewHighScore()
     {
-        SaveLoad.scores.Add(gameObject.GetComponent<AsteroidBehavoir>().getScore());
+        if (SaveLoad.scores != null)
+        {
+            SaveLoad.scores.Add(gameObject.GetComponent<AsteroidBehavoir>().getScore());
+        }
+        else
+        {
+            SaveLoad.Load();
+        }
     }
     internal IEnumerator DoSplash(Vector3 pos)
     {
-            Quaternion quat;
-            if (pos.y < transform.position.y)
-            {
-                quat = Quaternion.LookRotation(transform.forward, transform.position - pos); //rotate textbox
-            }
-            else
-            {
-                quat = Quaternion.LookRotation(transform.forward, pos - transform.position);
-            }
-            GameObject SplashText = Instantiate((GameObject)Resources.Load("SplashText"), pos, quat, GameObject.Find("Canvas").transform);
-            SplashText.GetComponent<Text>().text = SplashString;
-            yield return new WaitForSeconds(3f);
-            Destroy(SplashText);
+        Quaternion quat;
+        if (pos.y < transform.position.y)
+        {
+            quat = Quaternion.LookRotation(transform.forward, transform.position - pos); //rotate textbox
+        }
+        else
+        {
+            quat = Quaternion.LookRotation(transform.forward, pos - transform.position);
+        }
+        GameObject SplashText = Instantiate((GameObject)Resources.Load("SplashText"), pos, quat, GameObject.Find("Canvas").transform);
+        SplashText.transform.position = pos;
+        SplashText.GetComponent<Text>().text = SplashString;
+        yield return new WaitForSeconds(5);
+        Destroy(SplashText);
     }
     public IEnumerator WaitFor(float WaitTime = 0, string callref = "") //varios timed function calls
     {
@@ -397,7 +403,6 @@ public class PlayerBehavoir : MonoBehaviour
             CancelInvoke("DoneDamage");
             AsteroidBehavoir AB = GetComponent<AsteroidBehavoir>();
             List<GameObject> newlist = AB.GetList("Asteroid");
-            AB.addEvadedAsteroids();
             newlist.Remove(AsteroidHit);
             AB.SetList("Asteroid", newlist);
             Destroy(AsteroidHit, 0);
