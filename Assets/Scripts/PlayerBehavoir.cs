@@ -7,14 +7,15 @@ using System.Linq;
 
 public class PlayerBehavoir : MonoBehaviour
 {
-    private static int PlayerHealth = 9999999, OnLevel = 1;
-    private GameObject EndUI, Score, Barrel, InstructionsUI, GameStartText, AmmoBar, HealthBar, Music, ExitGameButton, PauseScreen, MusicVolSlider, SFXVolSlider, Tips, Level, BulletPrefab;
+    private static int PlayerHealth = 3, OnLevel = 1;
+    private GameObject EndUI, Score, Barrel, InstructionsUI, GameStartText, AmmoBar, HealthBar, Music, ExitGameButton, PauseScreen, MusicVolSlider, SFXVolSlider, Tips, Level, BulletPrefab, ScoreName;
     private float BulletSize = 1, BulletMass = 1, ShotSpeed = 0.125f, BulletVelocityModifier = 0.75f, ShotCDTimer = 0, AmmoRegenTimer = 0, MaxAmmo = 30, AmmoCount, BarrelMoveSpeed = 150, AmmoWait = 0.5f;
     private bool InvincibilityFrames = false, TripleShot = false;
+    private ScoreFormat thisscore;
     internal static float LevelTime;
-    internal static bool GameStarted = false;
+    internal static bool GameStarted = false, isInput = false;
     internal bool ResettingScene = false;
-
+    
     void Start()
     {
         BulletPrefab = (GameObject)Resources.Load("BulletPrefab");
@@ -32,10 +33,14 @@ public class PlayerBehavoir : MonoBehaviour
         MusicVolSlider = GameObject.Find("MusicVol");
         SFXVolSlider = GameObject.Find("SFXVol");
         Tips = GameObject.Find("Tips");
+        thisscore = new ScoreFormat();
+        ScoreName = transform.Find("Canvas/ScoreName").gameObject;
+        ScoreName.GetComponent<InputField>().onEndEdit.AddListener(delegate{IsInput(ScoreName.GetComponent<InputField>());});
         MusicVolSlider.GetComponent<Slider>().value = SaveLoad.musicVol;
         SFXVolSlider.GetComponent<Slider>().value = SaveLoad.fXVol;
         Tips.SetActive(false);
         PauseScreen.SetActive(false);
+        ScoreName.SetActive(false);
         AmmoCount = MaxAmmo; //set ammo
         EndUI.GetComponent<Text>().text = string.Empty; //initialised as blank to get rid of the filler text
         ExitGameButton.GetComponent<Button>().onClick.AddListener(ExitGame);
@@ -59,7 +64,7 @@ public class PlayerBehavoir : MonoBehaviour
         }
         if (GameStarted)
         {
-            if (Input.GetKeyDown(KeyCode.Escape)) //pause the game
+            if (Input.GetKeyDown(KeyCode.Escape) && !ResettingScene) //pause the game
             {
                 Time.timeScale = Time.timeScale == 1 ? 0 : 1; //ternary operator for the speed that time runs at
                 if (Time.timeScale == 0)
@@ -79,9 +84,8 @@ public class PlayerBehavoir : MonoBehaviour
             }
             if (Time.timeScale != 0) //game isnt paused
             {
-                if ((Time.time - LevelTime) >= 100 + OnLevel)
+                if ((Time.time - LevelTime) >= (100* OnLevel) + OnLevel)
                 {
-                    LevelTime = (Time.time - LevelTime);
                     LevelUp();
                 }
                 if (InstructionsUI.transform.position.y < 40)
@@ -97,7 +101,28 @@ public class PlayerBehavoir : MonoBehaviour
                 ShotCDTimer += Time.deltaTime; //shotspeed incrememnt
                 if (IsPlayerDead() == true && ResettingScene == false) //do the end game ui's
                 {
-                    StartCoroutine(WaitFor(10, "ResetScene"));
+                    ScoreName.SetActive(true);
+                    EndUI.SetActive(true);
+                    thisscore.Level = OnLevel;
+                    thisscore.Score = gameObject.GetComponent<AsteroidBehavoir>().getScore();
+                    if (SaveLoad.scores == null)
+                    {
+                        SaveLoad.Load();
+                    }
+                    if (thisscore.Name != null)
+                    {
+                        SaveLoad.scores.Add(thisscore);
+                    }
+                    float highscore = 0;
+                    if (SaveLoad.scores.Count > 0)
+                    {
+                        highscore = SaveLoad.scores[0].Score;
+                        if (thisscore.Score > highscore)
+                        {
+                            highscore = thisscore.Score;
+                        }
+                    }
+                    EndUI.GetComponent<Text>().text = "RunScore = " + thisscore + System.Environment.NewLine + "Asteroids Evaded = " + GetComponent<AsteroidBehavoir>().GetEvadedAsteroids() + System.Environment.NewLine + "Highscore = " + highscore;
                 }
                 else
                 {
@@ -257,19 +282,6 @@ public class PlayerBehavoir : MonoBehaviour
         }
         return false;
     }
-    private void NewHighScore()
-    {
-        if (SaveLoad.scores != null)
-        {
-            ScoreFormat thisscore = new ScoreFormat();
-            thisscore.Score = gameObject.GetComponent<AsteroidBehavoir>().getScore();
-            SaveLoad.scores.Add(thisscore);
-        }
-        else
-        {
-            SaveLoad.Load();
-        }
-    }
     internal IEnumerator DoSplash(Vector3 pos, Color col, string SplashString)
     {
         Quaternion quat;
@@ -294,10 +306,14 @@ public class PlayerBehavoir : MonoBehaviour
         {
             case "ResetScene":
                 ResettingScene = true;
-                EndUI.GetComponent<Text>().text = "Score : " + gameObject.GetComponent<AsteroidBehavoir>().getScore() + System.Environment.NewLine + "Asteroids Cleared : " + gameObject.GetComponent<AsteroidBehavoir>().GetEvadedAsteroids().ToString() + System.Environment.NewLine + "Restarting Game...";
-                NewHighScore();
-                yield return new WaitForSeconds(WaitTime);
+                do
+                {
+                    yield return null;
+                } while (!isInput);
+                ScoreName.SetActive(false);
                 GameStarted = false;
+                isInput = false;
+                EndUI.SetActive(false);
                 SceneManager.LoadScene("Play");
                 break;
             case ("InvincibilityFrames"):
@@ -444,7 +460,7 @@ public class PlayerBehavoir : MonoBehaviour
     }
     internal void LevelUp()
     {
-        DoSplash(transform.up *5, Color.red, "LevelUp");
+        DoSplash(transform.position + Vector3.up, Color.red, "LevelUp");
         AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Powerup"), GameObject.Find("Music").transform.position, SaveLoad.fXVol);
         foreach (GameObject asteroid in GetComponent<AsteroidBehavoir>().GetList("Asteroid"))
         {
@@ -458,5 +474,11 @@ public class PlayerBehavoir : MonoBehaviour
         }
         AsteroidBehavoir.AsteroidSpawnRate = 3.5f;
         Level.GetComponent<Text>().text = "Level " + OnLevel;
+    }
+    internal void IsInput(InputField IF)
+    {
+        isInput = true;
+        thisscore.Name = IF.text;
+        StartCoroutine(WaitFor(callref: "ResetScene"));
     }
 }

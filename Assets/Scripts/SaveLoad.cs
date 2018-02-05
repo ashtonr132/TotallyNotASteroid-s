@@ -24,7 +24,7 @@ public class SaveLoad : MonoBehaviour {
     }
     internal static void Load()
     {
-        if (File.Exists("Highscores.binary"))
+        if (File.Exists("Highscores.binary") && scores != null)
         {
             BinaryFormatter formatter = new BinaryFormatter();
             FileStream saveFile = File.Open("Highscores.binary", FileMode.Open);
@@ -42,7 +42,7 @@ public class SaveLoad : MonoBehaviour {
             }
             saveFile.Close();
         }
-        else
+        else if(scores == null)
         {
             scores = new List<ScoreFormat>();
         }

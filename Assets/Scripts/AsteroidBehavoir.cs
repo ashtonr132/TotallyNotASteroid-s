@@ -131,7 +131,10 @@ public class AsteroidBehavoir : MonoBehaviour
             {
                 GameObject Prefab = (Random.Range(0.0f, 100.0f) <= PowerUpSpawnRate) ? PowerUpPrefab : AsteroidPrefab; //if rand is less than powerupspawn rate prefab is powerupprefab else its asteroid prefab
                 GameObject Asteroid = (GameObject)Instantiate(Prefab, SpawnPosition, new Quaternion(0, 0, 0, 0));
-                addEvadedAsteroids();
+                if (PlayerBehavoir.GameStarted)
+                {
+                    addEvadedAsteroids();
+                }
                 Rigidbody AstRB = Asteroid.GetComponent<Rigidbody>(); //this asteroids RB
                 AsteroidList.Add(Asteroid);
                 Asteroid.name = Prefab.name + " " + AsteroidList.Count;
@@ -176,7 +179,7 @@ public class AsteroidBehavoir : MonoBehaviour
     {
         if (AsteroidSpawnRate > SpawnRateCap)
         {
-            AsteroidSpawnRate -= 0.1f; //shorter spawn gap
+            AsteroidSpawnRate -= 0.075f; //shorter spawn gap
             VeloInc += 0.025f; //spawn higher velo
         }
     }

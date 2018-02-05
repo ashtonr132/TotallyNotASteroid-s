@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -22,10 +23,11 @@ public class MainMenuButtonFunctions : MonoBehaviour {
         ExitGB = GameObject.Find("Exit Game");
         MusicSlider = GameObject.Find("MusicVol");
         SFXSlider = GameObject.Find("Sound Effects Vol");
-        MusicSlider.SetActive(false);
-        SFXSlider.SetActive(false);
         MusicSlider.GetComponent<Slider>().value = SaveLoad.musicVol;
         SFXSlider.GetComponent<Slider>().value = SaveLoad.fXVol;
+        GameObject.Find("Music").GetComponent<AudioSource>().volume = SaveLoad.musicVol;
+        MusicSlider.SetActive(false);
+        SFXSlider.SetActive(false);
         AdditionalText = GameObject.Find("AdditionalText").GetComponent<Text>();
         StartB.GetComponent<Button>().onClick.AddListener(delegate{MenuButtons(StartB.name);});
         HighsB.GetComponent<Button>().onClick.AddListener(delegate{MenuButtons(HighsB.name);});
@@ -60,7 +62,7 @@ public class MainMenuButtonFunctions : MonoBehaviour {
                 AdditionalText.text = "HighScores!";
                 if (SaveLoad.scores != null)
                 {
-                    SaveLoad.scores.Sort();
+                    SaveLoad.scores = SaveLoad.scores.OrderBy(w => w.Score).ToList();
                     for (int i = SaveLoad.scores.Count - 1, j = 1; i >= 0; i--, j++)
                     {
                         if (j < 21)
