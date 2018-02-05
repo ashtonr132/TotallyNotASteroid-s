@@ -7,40 +7,40 @@ using System.Linq;
 
 public class PlayerBehavoir : MonoBehaviour
 {
-    private int asteroidsondeath = 0, PlayerHealth = 3, FireReps = 0;
-    private GameObject EndUI, Score, Barrel, AsteroidHit, InstructionsUI, GameStartText, AmmoBar, HealthBar, Music, ExitGameButton, PauseScreen, MusicVolSlider, SFXVolSlider, Tips;
-    public GameObject BulletPrefab; // assign in inspector
-    private float BulletSize = 1, BulletMass = 1, ShotSpeed = 0.125f, BulletVelocityModifier = 0.75f, ShotCDTimer = 0, repeats = 0, AmmoRegenTimer = 0, MaxAmmo = 30, AmmoCount, BarrelMoveSpeed = 150, AmmoWait = 0.5f;
+    private static int PlayerHealth = 9999999, OnLevel = 1;
+    private GameObject EndUI, Score, Barrel, InstructionsUI, GameStartText, AmmoBar, HealthBar, Music, ExitGameButton, PauseScreen, MusicVolSlider, SFXVolSlider, Tips, Level, BulletPrefab;
+    private float BulletSize = 1, BulletMass = 1, ShotSpeed = 0.125f, BulletVelocityModifier = 0.75f, ShotCDTimer = 0, AmmoRegenTimer = 0, MaxAmmo = 30, AmmoCount, BarrelMoveSpeed = 150, AmmoWait = 0.5f;
     private bool InvincibilityFrames = false, TripleShot = false;
+    internal static float LevelTime;
     internal static bool GameStarted = false;
     internal bool ResettingScene = false;
-    internal float LastFrameTime, FakeDT;
-    private string SplashString;
 
     void Start()
     {
-        AmmoCount = MaxAmmo; //set ammo
+        BulletPrefab = (GameObject)Resources.Load("BulletPrefab");
+        Level = GameObject.Find("Level");
         GameStartText = GameObject.Find("Start"); //set refs
         EndUI = GameObject.Find("EndUI");
         InstructionsUI = GameObject.Find("Instructions");
         Score = GameObject.Find("Score");
         Barrel = GameObject.Find("Barrel");
-        EndUI.GetComponent<Text>().text = string.Empty; //initialised as blank to get rid of the filler text
         AmmoBar = GameObject.Find("GreenBackground");
         HealthBar = GameObject.Find("RedBackground");
         Music = GameObject.Find("Music");
         ExitGameButton = GameObject.Find("Exit Game");
-        ExitGameButton.GetComponent<Button>().onClick.AddListener(ExitGame);
-        StartCoroutine(StartAudio()); //play music
-        UpdateBarUI();
         PauseScreen = GameObject.Find("Pause Screen");
         MusicVolSlider = GameObject.Find("MusicVol");
         SFXVolSlider = GameObject.Find("SFXVol");
+        Tips = GameObject.Find("Tips");
         MusicVolSlider.GetComponent<Slider>().value = SaveLoad.musicVol;
         SFXVolSlider.GetComponent<Slider>().value = SaveLoad.fXVol;
-        Tips = GameObject.Find("Tips");
         Tips.SetActive(false);
         PauseScreen.SetActive(false);
+        AmmoCount = MaxAmmo; //set ammo
+        EndUI.GetComponent<Text>().text = string.Empty; //initialised as blank to get rid of the filler text
+        ExitGameButton.GetComponent<Button>().onClick.AddListener(ExitGame);
+        StartCoroutine(StartAudio()); //play music
+        UpdateBarUI();
     }
 
     void Update()
@@ -51,11 +51,11 @@ public class PlayerBehavoir : MonoBehaviour
             SaveLoad.fXVol = SFXVolSlider.GetComponent<Slider>().value;
         }
         Music.GetComponent<AudioSource>().volume = SaveLoad.musicVol;
-        FakeDT = Time.realtimeSinceStartup - LastFrameTime; //realtimesincestartup isnt affected by timescale manipulation, this is accurate to 3decimal places, but isnt exactly the same as 
         if ((!GameStarted) && Input.anyKey) //player has started game
         {
             GameStarted = (!GameStarted);
             GameStartText.SetActive(false);
+            LevelTime = Time.time;
         }
         if (GameStarted)
         {
@@ -79,6 +79,11 @@ public class PlayerBehavoir : MonoBehaviour
             }
             if (Time.timeScale != 0) //game isnt paused
             {
+                if ((Time.time - LevelTime) >= 100 + OnLevel)
+                {
+                    LevelTime = (Time.time - LevelTime);
+                    LevelUp();
+                }
                 if (InstructionsUI.transform.position.y < 40)
                 {   
                     InstructionsUI.transform.position += Vector3.up / 50;
@@ -115,7 +120,6 @@ public class PlayerBehavoir : MonoBehaviour
                 }
             }
         }
-        LastFrameTime = Time.realtimeSinceStartup; //last frame time ref
     }
     private void BarrelRotate(Vector3 Rd)
     {
@@ -141,38 +145,33 @@ public class PlayerBehavoir : MonoBehaviour
                 return "Aim for coloured powerups.";
         }
     }
-
     void OnCollisionEnter(Collision col)
     {
         if (col.gameObject.tag == "Asteroid" && InvincibilityFrames == false) //if player is hit
         {
             PlayerHealth--;
-            AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Hit"), GameObject.Find("Music").transform.position, 1 * SaveLoad.fXVol);
-            AsteroidHit = col.gameObject;
-            InvokeRepeating("DoneDamage", 0, 1); //asteroid flashes and loses its collider
+            AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Hit"), GameObject.Find("Music").transform.position, SaveLoad.fXVol);
+            StartCoroutine(DoneDamage(col.gameObject));
             StartCoroutine(WaitFor(0.5f, "InvincibilityFrames")); //cant get hit immediatly after getting hit
         }
     }
-
-    public void PowerUpEffect(Vector3 pos)
+    internal void PowerUpEffect(Vector3 pos, Color col)
     {
-        AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Powerup"), GameObject.Find("Music").transform.position, 1 * SaveLoad.fXVol);
+        AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Powerup"), GameObject.Find("Music").transform.position, SaveLoad.fXVol);
         var x = UnityEngine.Random.Range(0, 10);
         switch (x)
         {
             case 0:
                 GetComponent<AsteroidBehavoir>().addScore((int)(Mathf.Abs(GetComponent<AsteroidBehavoir>().getScore() * 0.05f))); //add score
-                SplashString = "More Points!";
-                StartCoroutine(DoSplash(pos));
+                StartCoroutine(DoSplash(pos, col, "More Points!"));
                 break;
             case 1:
                 if (PlayerHealth < 5) //add max hp if not at maxhp
                 {
                     PlayerHealth++;
-                    SplashString = "Health Up!";
-                    StartCoroutine(DoSplash(pos));
+                    StartCoroutine(DoSplash(pos, col, "Health Up!"));
                 }
-                else PowerUpEffect(pos);
+                else PowerUpEffect(pos, col);
                 break;
             case 2:
                 for (var i = 0; i < 36; i++) //spawn 36 projectiles in a circle
@@ -183,28 +182,23 @@ public class PlayerBehavoir : MonoBehaviour
                     BulletCharacteristics(Bullet);
                     Destroy(Bullet, 2);
                 }
-                SplashString = "Bullet Blitz";
-                StartCoroutine(DoSplash(pos));
+                StartCoroutine(DoSplash(pos, col, "Bullet Blitz"));
                 break;
             case 3:
-                StartCoroutine(BulletRing(Random.Range(1, 5))); //shoots bullets in a timed rotation
-                SplashString = "Bullet Wave";
-                StartCoroutine(DoSplash(pos));
+                StartCoroutine(BulletRing(Random.Range(1f, 6f))); //shoots bullets in a timed rotation
+                StartCoroutine(DoSplash(pos, col, "Bullet Wave"));
                 break;
             case 4:
-                SplashString = "Pack a Punch"; //makes bullets large
                 StartCoroutine(WaitFor(3, "BigBullet"));
-                StartCoroutine(DoSplash(pos));
+                StartCoroutine(DoSplash(pos, col, "Pack a Punch"));
                 break;
             case 5:
-                SplashString = "TripleShot"; //shoot triple shot for a short time
                 StartCoroutine(WaitFor(5, "TripleShot"));
-                StartCoroutine(DoSplash(pos));
+                StartCoroutine(DoSplash(pos, col, "TripleShot"));
                 break;
             case 6:
-                SplashString = "ShotSpeedUp";
                 StartCoroutine(WaitFor(5, "ShotSpeedUp"));
-                StartCoroutine(DoSplash(pos));
+                StartCoroutine(DoSplash(pos, col, "ShotSpeedUp"));
                 break;
             case 7:
                 foreach (GameObject Asteroid in GetComponent<AsteroidBehavoir>().GetList("Asteroid")) //freeze all asteroids
@@ -214,30 +208,26 @@ public class PlayerBehavoir : MonoBehaviour
                         Asteroid.GetComponent<Rigidbody>().velocity = Vector3.zero;
                     }
                 }
-                SplashString = "Freeze";
-                StartCoroutine(DoSplash(pos));
+                StartCoroutine(DoSplash(pos, col, "Freeze"));
                 break;
             case 8:
                 GetComponent<AsteroidBehavoir>().setShieldBool(true); //activate shield
-                SplashString = "Shield Activated";
-                StartCoroutine(DoSplash(pos));
+                StartCoroutine(DoSplash(pos, col, "Shield Activated"));
                 break;
             case 9:
                 if (MaxAmmo < 45) //if not at max ammo add max ammo
                 {
                     MaxAmmo += 3;
-                    SplashString = "Ammo Up!";
-                    StartCoroutine(DoSplash(pos));
+                    StartCoroutine(DoSplash(pos, col, "Ammo Up!"));
                 }
-                else PowerUpEffect(pos);
+                else PowerUpEffect(pos, col);
                 break;
             default:
-                SplashString = "Error in power up effect";
+                Debug.Log("Error in power up effect");
                 break;
         }
     }
-
-    Vector3 CircleSpawn(Vector3 center, float radius, float ang) //returns a v3 point encircling an object in 2dspace
+    internal Vector3 CircleSpawn(Vector3 center, float radius, float ang) //returns a v3 point encircling an object in 2dspace
     {
         Vector3 pos;
         pos.x = center.x + radius * Mathf.Sin(ang * Mathf.Deg2Rad);
@@ -245,21 +235,21 @@ public class PlayerBehavoir : MonoBehaviour
         pos.z = center.z;
         return pos;
     }
-
-    IEnumerator BulletRing(int reps)
+    private IEnumerator BulletRing(float reps)
     {
-        for (int i = 0; i < reps*36; i++)
+        int FireReps = 0;
+        for (int i = 0; i < reps * 36; i++)
         {
-            yield return new WaitForSeconds(reps / reps *36);
+            yield return new WaitForSeconds(1/36);
             var Bullet = (GameObject)Instantiate(BulletPrefab, CircleSpawn(transform.position, 3, FireReps * 10), Quaternion.FromToRotation(-transform.right, transform.position - CircleSpawn(transform.position, 3, FireReps * 10)));
             BulletCharacteristics(Bullet);
             FireReps++;
+            Bullet.GetComponent<Rigidbody>().mass = 10;
             Bullet.GetComponent<Rigidbody>().velocity = Bullet.GetComponent<Rigidbody>().velocity / 5; //bullet ring fires slower bullets
             Destroy(Bullet, 2);
         }
     }
-
-    public bool IsPlayerDead()
+    internal bool IsPlayerDead()
     {
         if (PlayerHealth <= 0)
         {
@@ -267,19 +257,20 @@ public class PlayerBehavoir : MonoBehaviour
         }
         return false;
     }
-
     private void NewHighScore()
     {
         if (SaveLoad.scores != null)
         {
-            SaveLoad.scores.Add(gameObject.GetComponent<AsteroidBehavoir>().getScore());
+            ScoreFormat thisscore = new ScoreFormat();
+            thisscore.Score = gameObject.GetComponent<AsteroidBehavoir>().getScore();
+            SaveLoad.scores.Add(thisscore);
         }
         else
         {
             SaveLoad.Load();
         }
     }
-    internal IEnumerator DoSplash(Vector3 pos)
+    internal IEnumerator DoSplash(Vector3 pos, Color col, string SplashString)
     {
         Quaternion quat;
         if (pos.y < transform.position.y)
@@ -291,19 +282,19 @@ public class PlayerBehavoir : MonoBehaviour
             quat = Quaternion.LookRotation(transform.forward, pos - transform.position);
         }
         GameObject SplashText = Instantiate((GameObject)Resources.Load("SplashText"), pos, quat, GameObject.Find("Canvas").transform);
+        SplashText.GetComponent<Text>().color = col;
         SplashText.transform.position = pos;
         SplashText.GetComponent<Text>().text = SplashString;
         yield return new WaitForSeconds(5);
         Destroy(SplashText);
     }
-    public IEnumerator WaitFor(float WaitTime = 0, string callref = "") //varios timed function calls
+    internal IEnumerator WaitFor(float WaitTime = 0, string callref = "") //varios timed function calls
     {
         switch (callref)
         {
             case "ResetScene":
                 ResettingScene = true;
-                asteroidsondeath = gameObject.GetComponent<AsteroidBehavoir>().GetEvadedAsteroids();
-                EndUI.GetComponent<Text>().text = "Score : " + gameObject.GetComponent<AsteroidBehavoir>().getScore() + System.Environment.NewLine + "Asteroids Cleared : " + asteroidsondeath + System.Environment.NewLine + "Restarting Game...";
+                EndUI.GetComponent<Text>().text = "Score : " + gameObject.GetComponent<AsteroidBehavoir>().getScore() + System.Environment.NewLine + "Asteroids Cleared : " + gameObject.GetComponent<AsteroidBehavoir>().GetEvadedAsteroids().ToString() + System.Environment.NewLine + "Restarting Game...";
                 NewHighScore();
                 yield return new WaitForSeconds(WaitTime);
                 GameStarted = false;
@@ -355,7 +346,7 @@ public class PlayerBehavoir : MonoBehaviour
             Destroy(FadeMe);
         }
     }
-    void Fire() //bullet physics, properties, spawn points
+    internal void Fire() //bullet physics, properties, spawn points
     {
         if (ShotCDTimer > ShotSpeed && AmmoCount > 0)
         {
@@ -382,33 +373,27 @@ public class PlayerBehavoir : MonoBehaviour
         bullet.GetComponent<Rigidbody>().mass = BulletMass;
         StartCoroutine(FadeOut(bullet, 0.1f));
     }
-    public bool GetIsInvincible()
+    internal bool GetIsInvincible()
     {
         return InvincibilityFrames;
     }
-    private void DoneDamage() //phase flash asteroid that hit you
+    private IEnumerator DoneDamage(GameObject AsteroidHit) //phase flash asteroid that hit you
     {
-        repeats++;
-        if (repeats < 6)
-        {
             Rigidbody ARB = AsteroidHit.GetComponent<Rigidbody>();
-            ARB.isKinematic = true;
-            ARB.velocity = Vector3.zero;
-            AsteroidHit.GetComponent<Collider>().enabled = false;
-            AsteroidHit.gameObject.SetActive(AsteroidHit.gameObject.activeSelf == true ? false : true);
-        }
-        else
-        {
-            repeats = 0;
-            CancelInvoke("DoneDamage");
             AsteroidBehavoir AB = GetComponent<AsteroidBehavoir>();
+            ARB.isKinematic = true;
+            AsteroidHit.GetComponent<Collider>().enabled = false;
+            for (int i = 0; i < 5; i++)
+            {
+                yield return new WaitForSeconds(1);
+                AsteroidHit.gameObject.SetActive(AsteroidHit.gameObject.activeSelf == true ? false : true);
+            }
             List<GameObject> newlist = AB.GetList("Asteroid");
             newlist.Remove(AsteroidHit);
             AB.SetList("Asteroid", newlist);
             Destroy(AsteroidHit, 0);
-        }
     }
-    void UpdateBarUI()
+    private void UpdateBarUI()
     {
         bool Display;
         for (int i = 0; i < HealthBar.transform.childCount; i++) //foreach health activate one hp bar
@@ -436,16 +421,16 @@ public class PlayerBehavoir : MonoBehaviour
             AmmoBar.transform.GetChild(i - 1).gameObject.SetActive(Display);
         }
     }
-    IEnumerator StartAudio()
+    internal IEnumerator StartAudio()
     {
         AudioSource music = Music.GetComponent<AudioSource>();
         foreach (var track in Resources.LoadAll("Music", typeof(AudioClip)))
         {
             if (track.name != "GalacticTemple")
             {
-            music.clip = ((AudioClip)track);
-            music.Play();
-            yield return new WaitForSeconds(music.clip.length);
+                music.clip = ((AudioClip)track);
+                music.Play();
+                yield return new WaitForSeconds(music.clip.length);
             }
         }
         StartCoroutine(StartAudio());
@@ -456,5 +441,22 @@ public class PlayerBehavoir : MonoBehaviour
         GameStarted = false;
         Time.timeScale = 1;
         SceneManager.LoadScene("MainMenu");
+    }
+    internal void LevelUp()
+    {
+        DoSplash(transform.up *5, Color.red, "LevelUp");
+        AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Powerup"), GameObject.Find("Music").transform.position, SaveLoad.fXVol);
+        foreach (GameObject asteroid in GetComponent<AsteroidBehavoir>().GetList("Asteroid"))
+        {
+            asteroid.GetComponent<Rigidbody>().velocity = (asteroid.transform.position - transform.position).normalized * 10;
+        }
+        GetComponent<AsteroidBehavoir>().addScore((int)Mathf.Round(Time.time - LevelTime));
+        OnLevel++;
+        if (AsteroidBehavoir.SpawnRateCap > 0.5f)
+        {
+            AsteroidBehavoir.SpawnRateCap =- 0.25f;
+        }
+        AsteroidBehavoir.AsteroidSpawnRate = 3.5f;
+        Level.GetComponent<Text>().text = "Level " + OnLevel;
     }
 }

@@ -13,7 +13,7 @@ public class BulletBehavoir : MonoBehaviour
     {
         if (col.gameObject.tag == "PowerUp")
         {
-            player.GetComponent<PlayerBehavoir>().PowerUpEffect(col.transform.position); //do a powerup effect
+            player.GetComponent<PlayerBehavoir>().PowerUpEffect(col.transform.position, col.gameObject.GetComponent<Renderer>().material.color); //do a powerup effect
             List<GameObject> newlist = player.GetComponent<AsteroidBehavoir>().GetList("Asteroid");
             newlist.Remove(col.gameObject); //remove powerup from list
             player.GetComponent<AsteroidBehavoir>().SetList("Asteroid", newlist); //this stop iterative processes from throwing errors because of editing lists during iterations

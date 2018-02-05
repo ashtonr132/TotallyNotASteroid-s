@@ -5,7 +5,8 @@ using System.Collections.Generic;
 public class AsteroidBehavoir : MonoBehaviour
 {
     private int Score = 0, AsteroidsEvaded = 0;
-    private float AsteroidSpawnRate = 3.5f, AsteroidSpawnCDTimer = 0, VeloInc = 1.25f, PowerUpSpawnRate = 5.0f, Counter = 0, ShieldRotationSpeed = 0, x = 0;
+    private float AsteroidSpawnCDTimer = 0, VeloInc = 1.25f, PowerUpSpawnRate = 5.0f, Counter = 0, ShieldRotationSpeed = 0, x = 0;
+    internal static float AsteroidSpawnRate = 3.5f, SpawnRateCap = 1.5f;
     private GameObject AsteroidPrefab, PowerUpPrefab; //set in inspector
     private bool ShieldActive = false;
     private GameObject InnerRing, OuterRing, scoreUI;
@@ -173,10 +174,10 @@ public class AsteroidBehavoir : MonoBehaviour
     }
     private void DifficultyAdd()
     {
-        if (AsteroidSpawnRate > 0.5f)
+        if (AsteroidSpawnRate > SpawnRateCap)
         {
             AsteroidSpawnRate -= 0.1f; //shorter spawn gap
-            VeloInc += 0.05f; //spawn higher velo
+            VeloInc += 0.025f; //spawn higher velo
         }
     }
 

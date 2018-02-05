@@ -6,7 +6,7 @@ using System.IO;
 
 public class SaveLoad : MonoBehaviour {
 
-    internal static List<float> scores;
+    internal static List<ScoreFormat> scores;
     internal static float musicVol, fXVol;
 
     internal static void Save()
@@ -44,13 +44,20 @@ public class SaveLoad : MonoBehaviour {
         }
         else
         {
-            scores = new List<float>();
+            scores = new List<ScoreFormat>();
         }
     }
 }
 [System.Serializable]
 internal class SaveData
 {
-    internal List<float> Scores;
+    internal List<ScoreFormat> Scores;
     internal float MusicVol, FXVol;
+}
+[System.Serializable]
+internal class ScoreFormat
+{
+    internal float Score;
+    internal int Level;
+    internal string Name;
 }

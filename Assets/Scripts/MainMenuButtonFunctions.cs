@@ -65,7 +65,8 @@ public class MainMenuButtonFunctions : MonoBehaviour {
                     {
                         if (j < 21)
                         {
-                            AdditionalText.text += System.Environment.NewLine + j + ". " + Mathf.Round(SaveLoad.scores[i]);
+                            ScoreFormat sf = SaveLoad.scores[i];
+                            AdditionalText.text += System.Environment.NewLine + j + ". " + sf.Score + ", " + sf.Level + ", " +  sf.Name;
                         }
                     }
                 }
