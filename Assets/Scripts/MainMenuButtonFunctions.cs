@@ -64,10 +64,6 @@ public class MainMenuButtonFunctions : MonoBehaviour {
                         }
                     }
                 }
-                else
-                {
-                    SaveLoad.Load();
-                }
                 if (AdditionalText.text == "HighScores!")
                 {
                     AdditionalText.text += System.Environment.NewLine + "No highscores set yet!";

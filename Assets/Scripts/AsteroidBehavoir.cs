@@ -7,22 +7,26 @@ public class AsteroidBehavoir : MonoBehaviour
     [SerializeField]
     private Collider OuterCol;
     [SerializeField]
-    private GameObject AsteroidPrefab, PowerUpPrefab; //set in inspector
+    private GameObject AsteroidPrefab, PowerUpPrefab, ScoreName; //set in inspector
     [SerializeField]
     private GameObject InnerRing, OuterRing, scoreUI;
     private bool ShieldActive = false;
     private Vector3 OuterCenter;
     private float AsteroidSpawnCDTimer = 0, VeloInc = 1.25f, PowerUpSpawnRate = 5.0f, Counter = 0, ShieldRotationSpeed = 0, x = 0;
-    internal static float AsteroidSpawnRate = 3.5f, SpawnRateCap = 1.5f;
+    internal static float AsteroidSpawnRate = 3f, SpawnRateCap = 1.5f;
     internal static int Score;
     internal static List<GameObject> AsteroidList = new List<GameObject>(), ShieldList = new List<GameObject>();
     
     void Start()
     {
         InvokeRepeating("DifficultyAdd", 5.0f, 5.0f);
-        foreach (GameObject Shield in GameObject.FindGameObjectsWithTag("Shield"))
+        ShieldList.Clear();
+        foreach (Transform Shield in transform)
         {
-            ShieldList.Add(Shield);
+            if (Shield.tag == "Shield")
+            {
+                ShieldList.Add(Shield.gameObject);
+            }
         }
         OuterCenter = OuterCol.bounds.center;
         ShieldList[0].transform.position = new Vector3(OuterCenter.x + 2, OuterCenter.y, OuterCenter.z); //setting starting pos
@@ -39,7 +43,7 @@ public class AsteroidBehavoir : MonoBehaviour
     {
         if (PlayerBehavoir.GameStarted)
         {
-            if (GetComponent<PlayerBehavoir>().IsPlayerDead() == false && Time.timeScale != 0)
+            if (PlayerBehavoir.PlayerHealth > 0 && Time.timeScale != 0)
             {
                 Score++;
             }
@@ -131,9 +135,9 @@ public class AsteroidBehavoir : MonoBehaviour
             {
                 GameObject Prefab = (Random.Range(0.0f, 100.0f) <= PowerUpSpawnRate) ? PowerUpPrefab : AsteroidPrefab; //if rand is less than powerupspawn rate prefab is powerupprefab else its asteroid prefab
                 GameObject Asteroid = (GameObject)Instantiate(Prefab, SpawnPosition, Quaternion.identity);
-                if (PlayerBehavoir.GameStarted)
+                if (!ScoreName.activeSelf)
                 {
-                    PlayerBehavoir.AsteroidsEvaded += 1;
+                    PlayerBehavoir.AsteroidsEvaded++;
                 }
                 Rigidbody AstRB = Asteroid.GetComponent<Rigidbody>(); //this asteroids RB
                 AsteroidList.Add(Asteroid);
@@ -179,8 +183,8 @@ public class AsteroidBehavoir : MonoBehaviour
     {
         if (AsteroidSpawnRate > SpawnRateCap)
         {
-            AsteroidSpawnRate -= 0.075f; //shorter spawn gap
-            VeloInc += 0.025f; //spawn higher velo
+            AsteroidSpawnRate -= 0.05f; //shorter spawn gap
+            VeloInc += 0.02f; //spawn higher velo
         }
     }
     private void Count()

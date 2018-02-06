@@ -11,9 +11,9 @@ public class PlayerBehavoir : MonoBehaviour
     private GameObject EndUI, Score, Barrel, InstructionsUI, GameStartText, AmmoBar, HealthBar, Music, ExitGameButton, PauseScreen, MusicVolSlider, SFXVolSlider, Tips, Level, BulletPrefab, ScoreName;
     private float BulletSize = 1, BulletMass = 2, ShotSpeed = 0.125f, BulletVelocityModifier = 0.75f, ShotCDTimer = 0, AmmoRegenTimer = 0, MaxAmmo = 27, AmmoCount, BarrelMoveSpeed = 150, AmmoWait = 0.5f;
     private bool InvincibilityFrames = false, TripleShot = false;
-    private static int PlayerHealth = 3, OnLevel = 1, MaxHP = 5, AmmoCap = 45;
+    private static int OnLevel = 1, MaxHP = 5, AmmoCap = 45;
     private ScoreFormat ThisScore;
-    internal static int AsteroidsEvaded = 0;
+    internal static int AsteroidsEvaded = 0, PlayerHealth = 3;
     internal static float LevelTime, MaxRotationSpeed = 450;
     internal static bool GameStarted = false, isInput = false, ResettingScene = false;
     
@@ -50,7 +50,7 @@ public class PlayerBehavoir : MonoBehaviour
         }
         if (GameStarted)
         {
-            if (Input.GetKeyDown(KeyCode.Escape) && !ResettingScene) //pause the game
+            if (Input.GetKeyDown(KeyCode.Escape) && !ResettingScene && PlayerHealth > 0) //pause the game
             {
                 PauseGame();
             }
@@ -58,7 +58,7 @@ public class PlayerBehavoir : MonoBehaviour
             {
                 AmmoRegenTimer += Time.deltaTime; //wait for regen to start
                 ShotCDTimer += Time.deltaTime; //shotspeed incrememnt
-                if ((Time.time - LevelTime) >= (100 * OnLevel) + OnLevel) //Level Up
+                if ((Time.time - LevelTime) >= (100 * OnLevel) + OnLevel && PlayerHealth > 0) //Level Up
                 {
                     LevelUp();
                 }
@@ -71,7 +71,7 @@ public class PlayerBehavoir : MonoBehaviour
                     AmmoCount += 1.25f;
                 }
                 UpdateBarUI();
-                if (IsPlayerDead() == true && ResettingScene == false) //do the end game ui's
+                if (PlayerHealth <= 0 && ResettingScene == false) //do the end game ui's
                 {
                     EndGameUI();
                 }
@@ -118,27 +118,14 @@ public class PlayerBehavoir : MonoBehaviour
     private void EndGameUI()
     {
         ScoreName.SetActive(true);
-        EndUI.SetActive(true);
         ThisScore.Level = OnLevel;
         ThisScore.Score = AsteroidBehavoir.Score;
-        if (SaveLoad.scores == null)
+        float Highscore = ThisScore.Score;
+        if (SaveLoad.scores != null && SaveLoad.scores.Count > 0 && SaveLoad.scores[SaveLoad.scores.Count - 1].Score > Highscore)
         {
-            SaveLoad.Load();
+            Highscore = SaveLoad.scores[SaveLoad.scores.Count -1].Score;
         }
-        if (ThisScore.Name != null)
-        {
-            SaveLoad.scores.Add(ThisScore);
-        }
-        float Highscore = 0;
-        if (SaveLoad.scores.Count > 0)
-        {
-            Highscore = SaveLoad.scores[0].Score;
-            if (ThisScore.Score > Highscore)
-            {
-                Highscore = ThisScore.Score;
-            }
-        }
-        EndUI.GetComponent<Text>().text = "RunScore = " + ThisScore + System.Environment.NewLine + "Asteroids Evaded = " + AsteroidsEvaded 
+        EndUI.GetComponent<Text>().text = "RunScore = " + ThisScore.Score + System.Environment.NewLine + "Asteroids Evaded = " + AsteroidsEvaded
             + System.Environment.NewLine + "Highscore = " + Highscore;
     }
     private void BarrelRotate(Vector3 Rd)
@@ -156,11 +143,11 @@ public class PlayerBehavoir : MonoBehaviour
             case 0:
                 return "Asteroid Fragments are too small to damage your ship.";
             case 1:
-                return "Push asteroids as far away as possible for the best odds of survival."; //tips should be no longer than this
+                return "Push asteroids as far away as possible to better your odds"; 
             case 2:
                 return "Increased fire rate also makes your ammo infinite";
             case 3:
-                return "Triple Shot decreases the ammo loss rate by exactly 1/3.";
+                return "Triple Shot decreases the ammo loss rate by exactly 1/3."; //tips should be no longer than this
             default:
                 return "Aim for coloured powerups.";
         }
@@ -269,14 +256,6 @@ public class PlayerBehavoir : MonoBehaviour
             Destroy(Bullet, 2);
         }
     }
-    internal bool IsPlayerDead()
-    {
-        if (PlayerHealth <= 0)
-        {
-            return true;
-        }
-        return false;
-    }
     internal IEnumerator DoSplash(Vector3 pos, Color col, string SplashString)
     {
         Quaternion quat;
@@ -306,11 +285,21 @@ public class PlayerBehavoir : MonoBehaviour
                 {
                     yield return null;
                 } while (!isInput); //wait for player to input his name for the score board
-                ScoreName.SetActive(false);
+                OnLevel = 1;
+                MaxHP = 5;
+                AsteroidsEvaded = 0;
+                PlayerHealth = 3;
+                LevelTime = 0;
+                MaxRotationSpeed = 450;
+                AsteroidBehavoir.AsteroidSpawnRate = 3f;
+                AsteroidBehavoir.SpawnRateCap = 1.5f;
+                AsteroidBehavoir.Score = 0;
+                AsteroidBehavoir.AsteroidList.Clear();
                 GameStarted = false;
                 isInput = false;
-                EndUI.SetActive(false);
                 ResettingScene = false;
+                EndUI.GetComponent<Text>().text = string.Empty;
+                ScoreName.SetActive(false);
                 SceneManager.LoadScene("Play");
                 break;
             case ("InvincibilityFrames"):
@@ -474,6 +463,7 @@ public class PlayerBehavoir : MonoBehaviour
     {
         isInput = true;
         ThisScore.Name = IF.text;
+        SaveLoad.scores.Add(ThisScore);
         StartCoroutine(WaitFor(callref: "ResetScene"));
     }
 }
