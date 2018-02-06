@@ -138,16 +138,20 @@ public class PlayerBehavoir : MonoBehaviour
     }
     private string GetTip()
     {
-        switch (Random.Range(0, 5)) //although this is a extent of 6, the integer function of random range is (inclusive, exclusive) 
+        switch (Random.Range(0, 7)) //although this is a extent of 6, the integer function of random range is (inclusive, exclusive) 
         {
             case 0:
                 return "Asteroid Fragments are too small to damage your ship.";
             case 1:
-                return "Push asteroids as far away as possible to better your odds"; 
+                return "Push asteroids as far away as possible to better your odds."; 
             case 2:
-                return "Increased fire rate also makes your ammo infinite";
+                return "Increased fire rate also makes your ammo infinite.";
             case 3:
                 return "Triple Shot decreases the ammo loss rate by exactly 1/3."; //tips should be no longer than this
+            case 4:
+                return "Your deflector pellets do not damage your ship."; //tips should be no longer than this
+            case 5:
+                return "Your barrel can deflect asteroids."; //tips should be no longer than this
             default:
                 return "Aim for coloured powerups.";
         }
@@ -254,7 +258,6 @@ public class PlayerBehavoir : MonoBehaviour
             FireReps++;
             Bullet.GetComponent<Rigidbody>().mass = 10;
             Bullet.GetComponent<Rigidbody>().velocity = Bullet.GetComponent<Rigidbody>().velocity / 5; //bullet ring fires slower bullets
-            Destroy(Bullet, 2);
         }
     }
     internal IEnumerator DoSplash(Vector3 pos, Color col, string SplashString)
@@ -374,7 +377,7 @@ public class PlayerBehavoir : MonoBehaviour
         bullet.GetComponent<Rigidbody>().velocity = bullet.transform.right * 30 * BulletVelocityModifier;
         bullet.transform.localScale = Vector3.one * BulletSize / 4;
         bullet.GetComponent<Rigidbody>().mass = BulletMass;
-        StartCoroutine(FadeOut(bullet, 0.1f));
+        StartCoroutine(FadeOut(bullet, 0.03f));
     }
     internal bool GetIsInvincible()
     {
