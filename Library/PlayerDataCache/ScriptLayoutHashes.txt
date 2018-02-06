@@ -1,4 +1,4 @@
-WindowsStandalone
+OSXStandalone
 SceneListBegin?
 Assets/Scenes/MainMenu.unity
 Assets/Scenes/Play.unity

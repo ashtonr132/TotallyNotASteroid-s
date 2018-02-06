@@ -312,11 +312,9 @@ public class PlayerBehavoir : MonoBehaviour
                 InvincibilityFrames = false;
                 break;
             case ("BigBullet"):
-                BulletVelocityModifier = 0.65f;
                 BulletMass = 6;
                 BulletSize = 3;
                 yield return new WaitForSeconds(WaitTime);
-                BulletVelocityModifier = 0.75f;
                 BulletMass = 2;
                 BulletSize = 1;
                 break;
@@ -450,7 +448,7 @@ public class PlayerBehavoir : MonoBehaviour
     {
         AsteroidBehavoir.SpawnRateCap -= 0.01f;
         DoSplash(transform.position + Vector3.up, Color.red, "LevelUp");
-        AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Powerup"), GameObject.Find("Music").transform.position, SaveLoad.fXVol);
+        AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/LevelUp"), Music.transform.position, SaveLoad.fXVol);
         foreach (GameObject asteroid in AsteroidBehavoir.AsteroidList)
         {
             asteroid.GetComponent<Rigidbody>().velocity = (asteroid.transform.position - transform.position).normalized * 10;
@@ -469,6 +467,7 @@ public class PlayerBehavoir : MonoBehaviour
         isInput = true;
         ThisScore.Name = IF.text;
         SaveLoad.scores.Add(ThisScore);
+        AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/GameOver"), Music.transform.position, SaveLoad.fXVol);
         StartCoroutine(WaitFor(callref: "ResetScene"));
     }
 }
