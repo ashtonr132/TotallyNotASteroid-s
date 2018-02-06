@@ -60,7 +60,7 @@ public class MainMenuButtonFunctions : MonoBehaviour {
                         if (j < 21)
                         {
                             ScoreFormat sf = SaveLoad.scores[i];
-                            AdditionalText.text += System.Environment.NewLine + j + ". " + sf.Score + ", " + sf.Level + ", " +  sf.Name;
+                            AdditionalText.text += System.Environment.NewLine + j + ". " + sf.Score + ", Level " + sf.Level + ", Name " +  sf.Name;
                         }
                     }
                 }

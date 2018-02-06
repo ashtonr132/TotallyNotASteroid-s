@@ -164,6 +164,7 @@ public class PlayerBehavoir : MonoBehaviour
     }
     internal void PowerUpEffect(Vector3 pos, Color col)
     {
+        col.a = 255;
         AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Powerup"), Music.transform.position, SaveLoad.fXVol);
         var x = UnityEngine.Random.Range(0, 10);
         switch (x)

@@ -32,7 +32,6 @@ public class AsteroidDestroy : MonoBehaviour
             particles.GetComponent<ParticleSystem>().GetComponent<Renderer>().material = GetComponent<Renderer>().material;
             ParticleSystem.MainModule psmain = particles.GetComponent<ParticleSystem>().main;
             psmain.startSizeMultiplier *= transform.localScale.magnitude * 100;
-            Destroy(particles, particles.GetComponent<ParticleSystem>().main.startLifetime.constantMax);
         }
     }
 }

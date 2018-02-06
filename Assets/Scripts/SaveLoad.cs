@@ -7,7 +7,7 @@ using System.IO;
 public class SaveLoad : MonoBehaviour {
 
     internal static List<ScoreFormat> scores;
-    internal static float musicVol, fXVol;
+    internal static float musicVol = 0.6f, fXVol = 0.6f;
 
     internal static void Save()
     {

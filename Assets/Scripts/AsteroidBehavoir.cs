@@ -16,7 +16,7 @@ public class AsteroidBehavoir : MonoBehaviour
     internal static float AsteroidSpawnRate = 3f, SpawnRateCap = 1.5f;
     internal static int Score;
     internal static List<GameObject> AsteroidList = new List<GameObject>(), ShieldList = new List<GameObject>();
-    
+
     void Start()
     {
         InvokeRepeating("DifficultyAdd", 5.0f, 5.0f);
@@ -144,7 +144,9 @@ public class AsteroidBehavoir : MonoBehaviour
                 Asteroid.name = Prefab.name + " " + AsteroidList.Count;
                 Asteroid.transform.localScale = Vector3.one * a / 100; //size scaled betw a rand
                 AstRB.mass = 115 * a;
-                AstRB.velocity = (((transform.position + (Vector3)Random.insideUnitCircle.normalized * Random.Range(0, 18)) - SpawnPosition) * VeloInc / (Mathf.Sqrt(a) * AstRB.mass)) * (VeloInc * (Random.Range(70, 100)/10));
+                Vector3 direction = ((transform.position + (Vector3)Random.insideUnitCircle.normalized * Random.Range(0, 18)) - SpawnPosition);
+                float magnitude = ((VeloInc / (Mathf.Sqrt(a) * AstRB.mass)) * (VeloInc * (Random.Range(6.5f, 9.5f))));
+                AstRB.velocity = direction * magnitude;
                 byte[] mybyte = System.BitConverter.GetBytes(b); //color variance via bits from rand float
                 while (mybyte[1] < 20 || mybyte[1] > 50) //is too dark or too light? reroll
                 {
