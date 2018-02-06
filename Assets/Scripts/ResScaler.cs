@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class ResScaler : MonoBehaviour {
-    GameObject canvas;
+    [SerializeField]
+    private GameObject canvas;
 	// Use this for initialization
 	void Start ()
     {
-        canvas = GameObject.Find("Canvas");
         for (float i = gameObject.GetComponent<RectTransform>().sizeDelta.y * gameObject.transform.localScale.y; i < canvas.GetComponent<RectTransform>().sizeDelta.y; i = gameObject.GetComponent<RectTransform>().sizeDelta.y * gameObject.transform.localScale.y)
         {
             gameObject.GetComponent<RectTransform>().sizeDelta += new Vector2(1.6f, 1);

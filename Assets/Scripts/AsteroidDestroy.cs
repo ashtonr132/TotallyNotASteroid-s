@@ -4,11 +4,10 @@ using UnityEngine;
 public class AsteroidDestroy : MonoBehaviour
 {
     private GameObject Player;
-    private AsteroidBehavoir astbehav;
+    private int MaxRange = 35;
     void Start()
     {
         Player = GameObject.Find("ship");
-        astbehav = Player.GetComponent<AsteroidBehavoir>();
     }
 
     void Update()
@@ -17,11 +16,11 @@ public class AsteroidDestroy : MonoBehaviour
         Vector3 pos = transform.position; //cannot assign directly to the position in this case
         pos.z = 0;
         transform.position = pos;
-        if (Vector3.Distance(Player.transform.position, transform.position) > 35) //destroy if out of game range
+        if (Vector3.Distance(Player.transform.position, transform.position) > MaxRange) //destroy if out of game range
         {
-            List<GameObject> newlist = astbehav.GetList("Asteroid");
+            List<GameObject> newlist = AsteroidBehavoir.AsteroidList;
             newlist.Remove(gameObject);
-            astbehav.SetList("Asteroid", newlist);
+            AsteroidBehavoir.AsteroidList = newlist;
             Destroy(gameObject, 0);
         }
     }

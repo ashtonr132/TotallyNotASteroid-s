@@ -6,8 +6,9 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class MainMenuButtonFunctions : MonoBehaviour {
-
-    private GameObject StartB, HighsB, SettiB, CrediB, ExitGB, MusicSlider, SFXSlider;
+    [SerializeField]
+    private GameObject StartB, HighsB, SettiB, CrediB, ExitGB, MusicSlider, SFXSlider, Music;
+    [SerializeField]
     private Text AdditionalText;
     // Use this for initialization
     private void Awake()
@@ -16,19 +17,11 @@ public class MainMenuButtonFunctions : MonoBehaviour {
     }
     void Start ()
     {
-        StartB = GameObject.Find("Start Game");
-        HighsB = GameObject.Find("HighScores");
-        SettiB = GameObject.Find("Settings");
-        CrediB = GameObject.Find("Credits");
-        ExitGB = GameObject.Find("Exit Game");
-        MusicSlider = GameObject.Find("MusicVol");
-        SFXSlider = GameObject.Find("Sound Effects Vol");
         MusicSlider.GetComponent<Slider>().value = SaveLoad.musicVol;
         SFXSlider.GetComponent<Slider>().value = SaveLoad.fXVol;
-        GameObject.Find("Music").GetComponent<AudioSource>().volume = SaveLoad.musicVol;
+        Music.GetComponent<AudioSource>().volume = SaveLoad.musicVol;
         MusicSlider.SetActive(false);
         SFXSlider.SetActive(false);
-        AdditionalText = GameObject.Find("AdditionalText").GetComponent<Text>();
         StartB.GetComponent<Button>().onClick.AddListener(delegate{MenuButtons(StartB.name);});
         HighsB.GetComponent<Button>().onClick.AddListener(delegate{MenuButtons(HighsB.name);});
         SettiB.GetComponent<Button>().onClick.AddListener(delegate{MenuButtons(SettiB.name);});
@@ -41,7 +34,7 @@ public class MainMenuButtonFunctions : MonoBehaviour {
         {
             SaveLoad.musicVol = MusicSlider.GetComponent<Slider>().value;
             SaveLoad.fXVol = SFXSlider.GetComponent<Slider>().value;
-            GameObject.Find("Music").GetComponent<AudioSource>().volume = SaveLoad.musicVol;
+            Music.GetComponent<AudioSource>().volume = SaveLoad.musicVol;
         }
     }
     void MenuButtons(string name)
@@ -58,7 +51,6 @@ public class MainMenuButtonFunctions : MonoBehaviour {
                     MusicSlider.SetActive(false);
                     SFXSlider.SetActive(false);
                 }
-                AdditionalText.text = string.Empty;
                 AdditionalText.text = "HighScores!";
                 if (SaveLoad.scores != null)
                 {
@@ -106,8 +98,13 @@ public class MainMenuButtonFunctions : MonoBehaviour {
                                     + "Art;" + System.Environment.NewLine
                                     + "Asteroids, 'Sumbada'" + System.Environment.NewLine
                                     + "HorseHead Nebula, 'HDSpaceWallpapers4305'" + System.Environment.NewLine + System.Environment.NewLine
-                                    + "Font;" + System.Environment.NewLine 
-                                    + "Demonized, 'GreyWolf Webworks'" + System.Environment.NewLine;
+                                    + "Font;" + System.Environment.NewLine
+                                    + "Demonized, 'GreyWolf Webworks'" + System.Environment.NewLine + System.Environment.NewLine
+                                    + "Invaluable Help;" + System.Environment.NewLine
+                                    + "'Ethan Bruins'" + System.Environment.NewLine + System.Environment.NewLine
+                                    + "PlayTesters;" + System.Environment.NewLine
+                                    + "'Dominik Bauer'" + System.Environment.NewLine
+                                    + "'James Morgan'";
                 break;
             case "Exit Game":
                     SaveLoad.Save();

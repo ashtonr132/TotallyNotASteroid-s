@@ -4,24 +4,21 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 public class AsteroidBehavoir : MonoBehaviour
 {
-    private int Score = 0, AsteroidsEvaded = 0;
+    [SerializeField]
+    private Collider OuterCol;
+    [SerializeField]
+    private GameObject AsteroidPrefab, PowerUpPrefab; //set in inspector
+    [SerializeField]
+    private GameObject InnerRing, OuterRing, scoreUI;
+    private bool ShieldActive = false;
+    private Vector3 OuterCenter;
     private float AsteroidSpawnCDTimer = 0, VeloInc = 1.25f, PowerUpSpawnRate = 5.0f, Counter = 0, ShieldRotationSpeed = 0, x = 0;
     internal static float AsteroidSpawnRate = 3.5f, SpawnRateCap = 1.5f;
-    private GameObject AsteroidPrefab, PowerUpPrefab; //set in inspector
-    private bool ShieldActive = false;
-    private GameObject InnerRing, OuterRing, scoreUI;
-    private Vector3 OuterCenter;
-    private Collider OuterCol;
-    private List<GameObject> AsteroidList = new List<GameObject>(), ShieldList = new List<GameObject>();
+    internal static int Score;
+    internal static List<GameObject> AsteroidList = new List<GameObject>(), ShieldList = new List<GameObject>();
     
     void Start()
     {
-        AsteroidPrefab = (GameObject)Resources.Load("AsteroidPrefab");
-        PowerUpPrefab = (GameObject)Resources.Load("PowerUpPrefab");
-        scoreUI = GameObject.Find("Score");
-        InnerRing = GameObject.Find("inner"); //of player ship
-        OuterRing = GameObject.Find("outer");
-        OuterCol = OuterRing.GetComponent<Collider>(); //colliders of ship
         InvokeRepeating("DifficultyAdd", 5.0f, 5.0f);
         foreach (GameObject Shield in GameObject.FindGameObjectsWithTag("Shield"))
         {
@@ -51,61 +48,64 @@ public class AsteroidBehavoir : MonoBehaviour
             OuterRing.transform.RotateAround(OuterRing.GetComponent<Renderer>().bounds.center, -Vector3.forward, Time.deltaTime * 5);
             if (ShieldActive == true)
             {
-                foreach (GameObject Shield in ShieldList)
-                {
-                    Shield.SetActive(true);
-                }
-                if (x == 0)
-                {
-                    InvokeRepeating("Count", 0.0f, 1.0f);
-                    x++;
-                }
-                foreach (GameObject Shield in ShieldList)
-                {
-                    Transform ShieldTrans = Shield.transform;
-                    if (Counter < 2)
-                    {
-                        ShieldRotationSpeed += 2; //Acceleration
-                        ShieldTrans.LookAt(OuterCenter);
-                        ShieldTrans.RotateAround(OuterCenter, new Vector3(0, 0, 2.5f), ShieldRotationSpeed * Time.deltaTime);
-                        if (Vector3.Distance(Shield.transform.position, OuterCenter) < 5)
-                        {
-                            ShieldTrans.Translate(-Vector3.forward * Time.deltaTime); //move away from player OT if within 5 units
-                        }
-                    }
-                    else if (Counter < 5)
-                    {
-                        ShieldTrans.LookAt(OuterCenter);
-                        ShieldTrans.RotateAround(OuterCenter, new Vector3(0, 0, 2.5f), ShieldRotationSpeed * Time.deltaTime);
-                    }
-                    else if (Counter < 7)
-                    {
-                        if (!(ShieldRotationSpeed <= 0))
-                        {
-                            ShieldRotationSpeed -= 2; //Decelleration
-                        }
-                        ShieldTrans.LookAt(OuterCenter);
-                        ShieldTrans.RotateAround(OuterCenter, new Vector3(0, 0, 2.5f), ShieldRotationSpeed * Time.deltaTime);
-                        if (Vector3.Distance(ShieldTrans.position, OuterCenter) > 2)
-                        {
-                            ShieldTrans.Translate(Vector3.forward * Time.deltaTime); //move away from player OT if within 5 units
-                        }
-                    }
-                }
-                if (Counter > 6)
-                {
-                    CancelInvoke("Count");
-                    Counter = 0;
-                    ShieldActive = false;
-                    x = 0;
-                    foreach (GameObject Shield in ShieldList)
-                    {
-                        Shield.SetActive(false);
-                    }
-                }
-
+                ShieldFunction();
             }
             SpawnAsteroid();
+        }
+    }
+    private void ShieldFunction()
+    {
+        foreach (GameObject Shield in ShieldList)
+        {
+            Shield.SetActive(true);
+        }
+        if (x == 0)
+        {
+            InvokeRepeating("Count", 0.0f, 1.0f);
+            x++;
+        }
+        foreach (GameObject Shield in ShieldList)
+        {
+            Transform ShieldTrans = Shield.transform;
+            if (Counter < 2)
+            {
+                ShieldRotationSpeed += 2; //Acceleration
+                ShieldTrans.LookAt(OuterCenter);
+                ShieldTrans.RotateAround(OuterCenter, new Vector3(0, 0, 2.5f), ShieldRotationSpeed * Time.deltaTime);
+                if (Vector3.Distance(Shield.transform.position, OuterCenter) < 5)
+                {
+                    ShieldTrans.Translate(-Vector3.forward * Time.deltaTime); //move away from player OT if within 5 units
+                }
+            }
+            else if (Counter < 5)
+            {
+                ShieldTrans.LookAt(OuterCenter);
+                ShieldTrans.RotateAround(OuterCenter, new Vector3(0, 0, 2.5f), ShieldRotationSpeed * Time.deltaTime);
+            }
+            else if (Counter < 7)
+            {
+                if (!(ShieldRotationSpeed <= 0))
+                {
+                    ShieldRotationSpeed -= 2; //Decelleration
+                }
+                ShieldTrans.LookAt(OuterCenter);
+                ShieldTrans.RotateAround(OuterCenter, new Vector3(0, 0, 2.5f), ShieldRotationSpeed * Time.deltaTime);
+                if (Vector3.Distance(ShieldTrans.position, OuterCenter) > 2)
+                {
+                    ShieldTrans.Translate(Vector3.forward * Time.deltaTime); //move away from player OT if within 5 units
+                }
+            }
+        }
+        if (Counter > 6)
+        {
+            CancelInvoke("Count");
+            Counter = 0;
+            ShieldActive = false;
+            x = 0;
+            foreach (GameObject Shield in ShieldList)
+            {
+                Shield.SetActive(false);
+            }
         }
     }
     private void SpawnAsteroid()
@@ -133,7 +133,7 @@ public class AsteroidBehavoir : MonoBehaviour
                 GameObject Asteroid = (GameObject)Instantiate(Prefab, SpawnPosition, new Quaternion(0, 0, 0, 0));
                 if (PlayerBehavoir.GameStarted)
                 {
-                    addEvadedAsteroids();
+                    PlayerBehavoir.AsteroidsEvaded += 1;
                 }
                 Rigidbody AstRB = Asteroid.GetComponent<Rigidbody>(); //this asteroids RB
                 AsteroidList.Add(Asteroid);
@@ -183,41 +183,6 @@ public class AsteroidBehavoir : MonoBehaviour
             VeloInc += 0.025f; //spawn higher velo
         }
     }
-
-    public int getScore()
-    {
-        return Score;
-    }
-
-    public void addScore(int scorein)
-    {
-        if (gameObject.GetComponent<PlayerBehavoir>().IsPlayerDead() == false)
-        {
-            Score += scorein;
-        }
-    }
-
-    public int GetEvadedAsteroids()
-    {
-        return AsteroidsEvaded;
-    }
-
-    public void addEvadedAsteroids()
-    {
-        AsteroidsEvaded++;
-    }
-
-    public List<GameObject> GetList(string list)
-    {
-        return AsteroidList;
-    }
-    public void SetList(string list, List<GameObject> list2)
-    {
-        if (list == "Asteroid")
-        {
-            AsteroidList = list2;
-        }
-    }
     private void Count()
     {
         if(Counter == 0 && ShieldList[0].activeSelf == true)
@@ -229,7 +194,7 @@ public class AsteroidBehavoir : MonoBehaviour
         }
         Counter++;
     }
-    public void setShieldBool(bool tf)
+    public void SetShieldBool(bool tf)
     {
         ShieldActive = tf;
     }
