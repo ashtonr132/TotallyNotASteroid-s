@@ -130,7 +130,7 @@ public class AsteroidBehavoir : MonoBehaviour
             if (SpawnFailed == false)
             {
                 GameObject Prefab = (Random.Range(0.0f, 100.0f) <= PowerUpSpawnRate) ? PowerUpPrefab : AsteroidPrefab; //if rand is less than powerupspawn rate prefab is powerupprefab else its asteroid prefab
-                GameObject Asteroid = (GameObject)Instantiate(Prefab, SpawnPosition, new Quaternion(0, 0, 0, 0));
+                GameObject Asteroid = (GameObject)Instantiate(Prefab, SpawnPosition, Quaternion.identity);
                 if (PlayerBehavoir.GameStarted)
                 {
                     PlayerBehavoir.AsteroidsEvaded += 1;

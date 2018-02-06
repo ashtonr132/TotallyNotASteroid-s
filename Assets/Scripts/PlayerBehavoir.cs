@@ -9,7 +9,7 @@ public class PlayerBehavoir : MonoBehaviour
 {
     [SerializeField]
     private GameObject EndUI, Score, Barrel, InstructionsUI, GameStartText, AmmoBar, HealthBar, Music, ExitGameButton, PauseScreen, MusicVolSlider, SFXVolSlider, Tips, Level, BulletPrefab, ScoreName;
-    private float BulletSize = 1, BulletMass = 2, ShotSpeed = 0.125f, BulletVelocityModifier = 0.75f, ShotCDTimer = 0, AmmoRegenTimer = 0, MaxAmmo = 30, AmmoCount, BarrelMoveSpeed = 150, AmmoWait = 0.5f;
+    private float BulletSize = 1, BulletMass = 2, ShotSpeed = 0.125f, BulletVelocityModifier = 0.75f, ShotCDTimer = 0, AmmoRegenTimer = 0, MaxAmmo = 27, AmmoCount, BarrelMoveSpeed = 150, AmmoWait = 0.5f;
     private bool InvincibilityFrames = false, TripleShot = false;
     private static int PlayerHealth = 3, OnLevel = 1, MaxHP = 5, AmmoCap = 45;
     private ScoreFormat ThisScore;
@@ -288,7 +288,7 @@ public class PlayerBehavoir : MonoBehaviour
         {
             quat = Quaternion.LookRotation(transform.forward, pos - transform.position);
         }
-        GameObject SplashText = Instantiate((GameObject)Resources.Load("SplashText"), pos, quat, GameObject.Find("Canvas").transform);
+        GameObject SplashText = Instantiate((GameObject)Resources.Load("Prefabs/SplashText"), pos, quat, GameObject.Find("Canvas").transform);
         Text STT = SplashText.GetComponent<Text>();
         STT.color = col;
         STT.text = SplashString;

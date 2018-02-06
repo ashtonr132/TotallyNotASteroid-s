@@ -28,7 +28,7 @@ public class AsteroidDestroy : MonoBehaviour
     {
         if (transform.childCount == 1) //spawn particle system on collision
         {
-            GameObject particles = Instantiate((GameObject)Resources.Load("Particles"), col.contacts[0].point, Quaternion.AngleAxis(Vector3.Angle(col.transform.position, transform.position), Vector3.back));
+            GameObject particles = Instantiate((GameObject)Resources.Load("Prefabs/Particles"), col.contacts[0].point, Quaternion.AngleAxis(Vector3.Angle(col.transform.position, transform.position), Vector3.back));
             particles.GetComponent<ParticleSystem>().GetComponent<Renderer>().material = GetComponent<Renderer>().material;
             ParticleSystem.MainModule psmain = particles.GetComponent<ParticleSystem>().main;
             psmain.startSizeMultiplier *= transform.localScale.magnitude * 100;
