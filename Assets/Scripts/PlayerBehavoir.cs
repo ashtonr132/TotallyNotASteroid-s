@@ -444,6 +444,7 @@ public class PlayerBehavoir : MonoBehaviour
     }
     internal void LevelUp()
     {
+        AsteroidBehavoir.SpawnRateCap -= 0.01f;
         DoSplash(transform.position + Vector3.up, Color.red, "LevelUp");
         AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Powerup"), GameObject.Find("Music").transform.position, SaveLoad.fXVol);
         foreach (GameObject asteroid in AsteroidBehavoir.AsteroidList)
