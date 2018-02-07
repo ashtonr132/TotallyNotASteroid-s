@@ -62,7 +62,7 @@ public class PlayerBehavoir : MonoBehaviour
                 {
                     LevelUp();
                 }
-                if (InstructionsUI.transform.position.y < 40)
+                if (InstructionsUI.transform.position.y < 40 && Time.timeSinceLevelLoad > 8)
                 {   
                     InstructionsUI.transform.position += Vector3.up / 50;
                 }
