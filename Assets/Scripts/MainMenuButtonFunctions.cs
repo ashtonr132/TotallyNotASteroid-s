@@ -42,7 +42,6 @@ public class MainMenuButtonFunctions : MonoBehaviour {
         switch (name)
         {
             case "Start Game":
-                SaveLoad.Save();
                 SceneManager.LoadScene("Play");
                 break;
             case "HighScores":
@@ -60,7 +59,7 @@ public class MainMenuButtonFunctions : MonoBehaviour {
                         if (j < 21)
                         {
                             ScoreFormat sf = SaveLoad.scores[i];
-                            AdditionalText.text += System.Environment.NewLine + j + ". " + sf.Score + ", Level " + sf.Level + ", Name " +  sf.Name;
+                            AdditionalText.text += System.Environment.NewLine + j + ". " + sf.Score + ", Level. " + sf.Level + ", Name. " +  sf.Name;
                         }
                     }
                 }
