@@ -11,7 +11,7 @@ public class PlayerBehavoir : MonoBehaviour
     [SerializeField]
     private GameObject EndUI, Score, Barrel, InstructionsUI, GameStartText, AmmoBar, HealthBar, Music, ExitGameButton, PauseScreen, MusicVolSlider, SFXVolSlider, Tips, Level, BulletPrefab, ScoreName;
     [SerializeField]
-    PostProcessingProfile ppb;
+    private PostProcessingProfile ppb;
     private float BulletSize = 1, BulletMass = 2, ShotSpeed = 0.125f, BulletVelocityModifier = 0.75f, ShotCDTimer = 0, AmmoRegenTimer = 0, MaxAmmo = 27, AmmoCount, BarrelMoveSpeed = 150, AmmoWait = 0.5f;
     private bool InvincibilityFrames = false, TripleShot = false;
     private static int OnLevel = 1, MaxHP = 5, AmmoCap = 45;
@@ -45,6 +45,10 @@ public class PlayerBehavoir : MonoBehaviour
             SaveLoad.fXVol = SFXVolSlider.GetComponent<Slider>().value;
         }
         Music.GetComponent<AudioSource>().volume = SaveLoad.musicVol;
+        var ppp = ppb.colorGrading.settings;
+        SaveLoad.hueShift += 0.1f;
+        ppp.basic.hueShift = SaveLoad.hueShift;
+        ppb.colorGrading.settings = ppp;
         if ((!GameStarted) && Input.anyKey) //player has started game
         {
             GameStarted = true;
@@ -59,12 +63,10 @@ public class PlayerBehavoir : MonoBehaviour
             }
             if (Time.timeScale != 0) //game isnt paused
             {
-                var ppp = ppb.colorGrading.settings;
-                ppp.basic.hueShift += 0.1f;
-                ppb.colorGrading.settings = ppp;
                 AmmoRegenTimer += Time.deltaTime; //wait for regen to start
                 ShotCDTimer += Time.deltaTime; //shotspeed incrememnt
-                if ((Time.time - LevelTime) >= (100 * OnLevel) + OnLevel && PlayerHealth > 0) //Level Up
+                transform.GetChild(1).GetChild(0).GetChild(0).localScale = (Vector3.one/(OnLevel + 0.5f)) * (((Time.time - LevelTime))/ (50 * OnLevel) + OnLevel);
+                if ((Time.time - LevelTime) >= (50 * OnLevel) + OnLevel && PlayerHealth > 0) //Level Up
                 {
                     LevelUp();
                 }
@@ -207,7 +209,7 @@ public class PlayerBehavoir : MonoBehaviour
                 for (var i = 0; i < 36; i++) //spawn 36 projectiles in a circle
                 {
                     Vector3 pos1 = CircleSpawn(transform.position, 3, i * 10); //shoots bullets in a circle around the player
-                    Quaternion rot = Quaternion.FromToRotation(-transform.right, transform.position - pos1);
+                    Quaternion rot = Quaternion.FromToRotation(transform.right, transform.position - pos1);
                     GameObject Bullet = (GameObject)Instantiate(BulletPrefab, pos1, rot);
                     BulletCharacteristics(Bullet);
                     Destroy(Bullet, 2);
@@ -241,16 +243,16 @@ public class PlayerBehavoir : MonoBehaviour
                 StartCoroutine(DoSplash(pos, col, "Freeze"));
                 break;
             case 8:
-                GetComponent<AsteroidBehavoir>().SetShieldBool(true); //activate shield
-                StartCoroutine(DoSplash(pos, col, "Shield Activated"));
-                break;
-            case 9:
                 if (MaxAmmo < AmmoCap) //maxammo is current max, ammo cap is highest possible val
                 {
                     MaxAmmo += 3;
                     StartCoroutine(DoSplash(pos, col, "Ammo Up!"));
                 }
                 else PowerUpEffect(pos, col);
+                break;
+            case 9:
+                StartCoroutine(WaitFor(5, "MASSive"));
+                StartCoroutine(DoSplash(pos, col, "MASSive"));
                 break;
             default:
                 Debug.Log("Error in power up effect");
@@ -313,6 +315,7 @@ public class PlayerBehavoir : MonoBehaviour
                 PlayerHealth = 3;
                 LevelTime = 0;
                 MaxRotationSpeed = 450;
+                AsteroidBehavoir.PowerUpSpawnRate = 5;
                 AsteroidBehavoir.AsteroidSpawnRate = 3f;
                 AsteroidBehavoir.SpawnRateCap = 1.5f;
                 AsteroidBehavoir.Score = 0;
@@ -332,13 +335,14 @@ public class PlayerBehavoir : MonoBehaviour
             case ("BigBullet"):
                 BulletMass = 6;
                 BulletSize = 3;
+                AmmoWait = 0.15f;
                 yield return new WaitForSeconds(WaitTime);
                 BulletMass = 2;
                 BulletSize = 1;
                 break;
             case ("TripleShot"):
                 TripleShot = true;
-                AmmoWait = 0.25f;
+                AmmoWait = 0.15f;
                 yield return new WaitForSeconds(WaitTime);
                 TripleShot = false;
                 AmmoWait = 0.5f;
@@ -349,6 +353,11 @@ public class PlayerBehavoir : MonoBehaviour
                 yield return new WaitForSeconds(WaitTime);
                 ShotSpeed += 0.1f;
                 AmmoWait = 0.5f;
+                break;
+            case ("MASSive"):
+                BulletMass = 100;
+                yield return new WaitForSeconds(WaitTime);
+                BulletMass = 2;
                 break;
             default:
                 break;
@@ -415,6 +424,18 @@ public class PlayerBehavoir : MonoBehaviour
             }
             HealthBar.transform.GetChild(i).gameObject.SetActive(Display);
         }
+        for (int i = 1; i < transform.GetChild(1).childCount - 1; i++) //foreach health activate one hp bar
+        {
+            if (i < PlayerHealth +1)
+            {
+                Display = true;
+            }
+            else
+            {
+                Display = false;
+            }
+            transform.GetChild(1).GetChild(i).gameObject.SetActive(Display);
+        }
         for (int i = 1; i <= AmmoBar.transform.childCount; i++) //foreach 3 ammo activate one ammo bar
         {
             if (i * 3 <= AmmoCount)
@@ -451,8 +472,13 @@ public class PlayerBehavoir : MonoBehaviour
     }
     internal void LevelUp()
     {
-        if (PlayerHealth <= 0)
+        if (PlayerHealth > 0)
         {
+            if (AsteroidBehavoir.PowerUpSpawnRate <= 12.5)
+            {
+                AsteroidBehavoir.PowerUpSpawnRate += 0.15f;
+            }
+            transform.GetChild(1).GetChild(0).GetChild(0).localScale = Vector3.one/10;
             AsteroidBehavoir.SpawnRateCap -= 0.01f;
             DoSplash(transform.position + Vector3.up, Color.red, "LevelUp");
             AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/LevelUp"), Music.transform.position, SaveLoad.fXVol);
@@ -464,7 +490,7 @@ public class PlayerBehavoir : MonoBehaviour
 
                 }
             }
-            AsteroidBehavoir.Score = (int)Mathf.Round(Time.time - LevelTime);
+            AsteroidBehavoir.Score += (int)Mathf.Round(Time.time - LevelTime);
             OnLevel++;
             if (AsteroidBehavoir.SpawnRateCap > 0.5f)
             {
@@ -478,7 +504,14 @@ public class PlayerBehavoir : MonoBehaviour
     {
         isInput = true;
         ThisScore.Name = IF.text;
-        SaveLoad.scores.Add(ThisScore);
+        if (SaveLoad.scores == null)
+        {
+            SaveLoad.scores = new List<ScoreFormat>();
+        }
+        SaveLoad
+            .scores
+            .Add(
+            ThisScore);
         AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/GameOver"), Music.transform.position, SaveLoad.fXVol);
         StartCoroutine(WaitFor(callref: "ResetScene"));
     }

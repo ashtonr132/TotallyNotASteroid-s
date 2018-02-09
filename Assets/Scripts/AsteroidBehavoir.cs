@@ -11,8 +11,8 @@ public class AsteroidBehavoir : MonoBehaviour
     [SerializeField]
     private GameObject OuterRing,InnerRing, scoreUI;
     private bool ShieldActive = false;
-    private float AsteroidSpawnCDTimer = 0, VeloInc = 1.25f, PowerUpSpawnRate = 5.0f, Counter = 0, ShieldRotationSpeed = 0, x = 0;
-    internal static float AsteroidSpawnRate = 3f, SpawnRateCap = 1.5f;
+    private float AsteroidSpawnCDTimer = 0, VeloInc = 1.25f, Counter = 0, ShieldRotationSpeed = 0, x = 0;
+    internal static float AsteroidSpawnRate = 3f, SpawnRateCap = 1.5f, PowerUpSpawnRate = 5.0f;
     internal static int Score;
     internal static List<GameObject> AsteroidList = new List<GameObject>();
 
@@ -24,6 +24,8 @@ public class AsteroidBehavoir : MonoBehaviour
 
     void Update()
     {
+        OuterRing.transform.RotateAround(OuterRing.GetComponent<Renderer>().bounds.center, -Vector3.forward, Time.deltaTime * 12);
+        InnerRing.transform.RotateAround(InnerRing.GetComponent<Renderer>().bounds.center, -Vector3.forward, Time.deltaTime * 36);
         if (PlayerBehavoir.GameStarted)
         {
             if (PlayerBehavoir.PlayerHealth > 0 && Time.timeScale != 0)
@@ -31,8 +33,7 @@ public class AsteroidBehavoir : MonoBehaviour
                 Score++;
             }
             scoreUI.GetComponent<Text>().text = "Score : " + Score; //display latest score val
-            OuterRing.transform.RotateAround(OuterRing.GetComponent<Renderer>().bounds.center, -Vector3.forward, Time.deltaTime * 5);
-            InnerRing.transform.RotateAround(InnerRing.GetComponent<Renderer>().bounds.center, -Vector3.forward, Time.deltaTime * 25);
+          
             SpawnAsteroid();
         }
     }

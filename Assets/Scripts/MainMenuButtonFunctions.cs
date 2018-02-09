@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.PostProcessing;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -10,6 +11,8 @@ public class MainMenuButtonFunctions : MonoBehaviour {
     private GameObject StartB, HighsB, SettiB, CrediB, ExitGB, MusicSlider, SFXSlider, Music;
     [SerializeField]
     private Text AdditionalText;
+    [SerializeField]
+    private PostProcessingProfile ppb;
     // Use this for initialization
     private void Awake()
     {
@@ -30,6 +33,10 @@ public class MainMenuButtonFunctions : MonoBehaviour {
     }
     private void Update()
     {
+        var ppp = ppb.colorGrading.settings;
+        SaveLoad.hueShift += 0.1f;
+        ppp.basic.hueShift = SaveLoad.hueShift;
+        ppb.colorGrading.settings = ppp;
         if (MusicSlider.activeSelf)
         {
             SaveLoad.musicVol = MusicSlider.GetComponent<Slider>().value;
@@ -93,13 +100,19 @@ public class MainMenuButtonFunctions : MonoBehaviour {
                                     + "Art;" + System.Environment.NewLine
                                     + "Asteroids, 'Sumbada'" + System.Environment.NewLine
                                     + "HorseHead Nebula, 'HDSpaceWallpapers4305'" + System.Environment.NewLine + System.Environment.NewLine
+                                    + "VFX;" + System.Environment.NewLine
+                                    + "Particle Systems/Magic, 'UETools'" + System.Environment.NewLine + System.Environment.NewLine
+                                    + "Post Processing Stack;" + System.Environment.NewLine
+                                    + "Unity Essentials, 'Unity Technologies'" + System.Environment.NewLine + System.Environment.NewLine
                                     + "Font;" + System.Environment.NewLine
                                     + "Demonized, 'GreyWolf Webworks'" + System.Environment.NewLine + System.Environment.NewLine
                                     + "Invaluable Help;" + System.Environment.NewLine
                                     + "'Ethan Bruins'" + System.Environment.NewLine + System.Environment.NewLine
                                     + "PlayTesters;" + System.Environment.NewLine
                                     + "'Dominik Bauer'" + System.Environment.NewLine
-                                    + "'James Morgan'";
+                                    + "'James Morgan'" + System.Environment.NewLine + System.Environment.NewLine
+                                    + "The Rest;" + System.Environment.NewLine
+                                    + "Robert Ashton";
                 break;
             case "Exit Game":
                     SaveLoad.Save();

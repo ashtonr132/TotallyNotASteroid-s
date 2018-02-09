@@ -3,19 +3,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+using UnityEngine.PostProcessing;
 
 public class SaveLoad : MonoBehaviour {
 
     internal static List<ScoreFormat> scores;
-    internal static float musicVol = 0.5f, fXVol = 0.5f;
+    internal static float musicVol = 0.5f, fXVol = 0.5f, hueShift = 0;
 
     internal static void Save()
-    { 
+    {
         SaveData saveData = new SaveData()
         {
             Scores = scores,
             MusicVol = musicVol,
-            FXVol = fXVol
+            FXVol = fXVol,
+            HueShift = hueShift
         };
         BinaryFormatter formatter = new BinaryFormatter();
         FileStream saveFile = File.Open("Highscores.binary", FileMode.Create);
@@ -38,6 +40,7 @@ public class SaveLoad : MonoBehaviour {
                 scores = saveData.Scores;
                 musicVol = saveData.MusicVol;
                 fXVol = saveData.FXVol;
+                hueShift = saveData.HueShift;
             }
             catch (System.Exception)
             {
@@ -52,7 +55,7 @@ public class SaveLoad : MonoBehaviour {
 internal class SaveData
 {
     internal List<ScoreFormat> Scores;
-    internal float MusicVol, FXVol;
+    internal float MusicVol, FXVol, HueShift;
 }
 [System.Serializable]
 internal class ScoreFormat
