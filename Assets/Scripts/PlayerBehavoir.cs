@@ -89,10 +89,12 @@ public class PlayerBehavoir : MonoBehaviour
                     }
                     if (Input.GetKey(KeyCode.LeftArrow))
                     {
+                        Barrel.transform.GetChild(2).GetComponent<ParticleSystem>().Play();
                         BarrelRotate(Vector3.forward);
                     }
                     else if (Input.GetKey(KeyCode.RightArrow))
                     {
+                        Barrel.transform.GetChild(1).GetComponent<ParticleSystem>().Play();
                         BarrelRotate(-Vector3.forward);
                     }
                     else
@@ -136,7 +138,7 @@ public class PlayerBehavoir : MonoBehaviour
     }
     private void BarrelRotate(Vector3 Rd)
     {
-        Barrel.transform.RotateAround(GameObject.Find("outer").GetComponent<Collider>().bounds.center, Rd, BarrelMoveSpeed * Time.deltaTime); //move barrel by move speed var
+        Barrel.transform.RotateAround(GameObject.Find("outer").GetComponent<Renderer>().bounds.center, Rd, BarrelMoveSpeed * Time.deltaTime); //move barrel by move speed var
         if (BarrelMoveSpeed < MaxRotationSpeed)
         {
             BarrelMoveSpeed += 20f;
@@ -168,8 +170,18 @@ public class PlayerBehavoir : MonoBehaviour
         {
             PlayerHealth--;
             AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Hit"), Music.transform.position, SaveLoad.fXVol);
-            StartCoroutine(DoneDamage(col.gameObject));
+            col.gameObject.GetComponent<Rigidbody>().velocity = (transform.position - col.gameObject.transform.position).normalized * 5;
             StartCoroutine(WaitFor(0.5f, "InvincibilityFrames")); //cant get hit immediatly after getting hit
+            if (Random.value >= 0.5)
+            {
+                transform.GetChild(5).position = col.contacts[0].point;
+                transform.GetChild(5).GetComponent<ParticleSystem>().Play();
+            }
+            else
+            {
+                transform.GetChild(4).position = col.contacts[0].point;
+                transform.GetChild(4).GetComponent<ParticleSystem>().Play();
+            }
         }
     }
     internal void PowerUpEffect(Vector3 pos, Color col)
@@ -263,7 +275,7 @@ public class PlayerBehavoir : MonoBehaviour
             BulletCharacteristics(Bullet);
             FireReps++;
             Bullet.GetComponent<Rigidbody>().mass = 10;
-            Bullet.GetComponent<Rigidbody>().velocity = Bullet.GetComponent<Rigidbody>().velocity / 5; //bullet ring fires slower bullets
+            Bullet.GetComponent<Rigidbody>().velocity = -Bullet.GetComponent<Rigidbody>().velocity / 5; //bullet ring fires slower bullets
         }
     }
     internal IEnumerator DoSplash(Vector3 pos, Color col, string SplashString)
@@ -360,14 +372,15 @@ public class PlayerBehavoir : MonoBehaviour
     {
         if (ShotCDTimer > ShotSpeed && AmmoCount > 0)
         {
+            Barrel.transform.GetChild(0).GetComponent<ParticleSystem>().Play();
             AmmoRegenTimer = 0;
-            Vector3 FirePoint3 = Barrel.transform.position + Barrel.transform.rotation * new Vector3(0.55f, 0, 0);
-            GameObject Bullet = (GameObject)Instantiate(BulletPrefab, FirePoint3, Barrel.transform.rotation);
+            Vector3 FirePoint3 = Barrel.transform.position + -Barrel.transform.right * 3.5f;
+            GameObject Bullet = (GameObject)Instantiate(BulletPrefab, FirePoint3, Barrel.transform.rotation * Quaternion.Euler(90,0,0));
             Physics.IgnoreCollision(Bullet.GetComponent<Collider>(), Barrel.GetComponent<Collider>(), true);
             BulletCharacteristics(Bullet);
             if (TripleShot == true)
             {
-                Vector3 FirePoint = Barrel.transform.position + Barrel.transform.rotation * new Vector3(0.35f, 1, 0), FirePoint2 = Barrel.transform.position + Barrel.transform.rotation * new Vector3(0.35f, -1, 0); //pos L&R of normal shooting, world space to local space
+                Vector3 FirePoint = Barrel.transform.position + -Barrel.transform.right * 4 -Barrel.transform.forward * 2, FirePoint2 = Barrel.transform.position + -Barrel.transform.right * 4 + Barrel.transform.forward *2; //pos L&R of normal shooting, world space to local space
                 GameObject BulletL = (GameObject)Instantiate(BulletPrefab, FirePoint, Barrel.transform.rotation), BulletR = (GameObject)Instantiate(BulletPrefab, FirePoint2, Barrel.transform.rotation); //inst L&R bullets
                 BulletCharacteristics(BulletL);
                 BulletCharacteristics(BulletR);
@@ -378,7 +391,7 @@ public class PlayerBehavoir : MonoBehaviour
     }
     private void BulletCharacteristics(GameObject bullet) //physics that applies to all bullets, in this class for useability of variables
     {
-        bullet.GetComponent<Rigidbody>().velocity = bullet.transform.right * 30 * BulletVelocityModifier;
+        bullet.GetComponent<Rigidbody>().velocity = -bullet.transform.right * 30 * BulletVelocityModifier;
         bullet.transform.localScale = Vector3.one * BulletSize / 4;
         bullet.GetComponent<Rigidbody>().mass = BulletMass;
         StartCoroutine(FadeOut(bullet, 0.03f));
@@ -386,20 +399,6 @@ public class PlayerBehavoir : MonoBehaviour
     internal bool GetIsInvincible()
     {
         return InvincibilityFrames;
-    }
-    private IEnumerator DoneDamage(GameObject AsteroidHit) //phase flash asteroid that hit you
-    {
-            List<GameObject> newlist = AsteroidBehavoir.AsteroidList;
-            AsteroidHit.GetComponent<Rigidbody>().isKinematic = true;
-            AsteroidHit.GetComponent<Collider>().enabled = false;
-            for (int i = 0; i < 5; i++)
-            {
-                yield return new WaitForSeconds(1);
-                AsteroidHit.SetActive(AsteroidHit.activeSelf == true ? false : true);
-            }
-            newlist.Remove(AsteroidHit);
-            AsteroidBehavoir.AsteroidList = newlist;
-            Destroy(AsteroidHit, 0);
     }
     private void UpdateBarUI()
     {

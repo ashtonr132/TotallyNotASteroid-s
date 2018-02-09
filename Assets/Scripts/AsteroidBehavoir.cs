@@ -9,9 +9,8 @@ public class AsteroidBehavoir : MonoBehaviour
     [SerializeField]
     private GameObject AsteroidPrefab, PowerUpPrefab, ScoreName; //set in inspector
     [SerializeField]
-    private GameObject OuterRing, scoreUI;
+    private GameObject OuterRing,InnerRing, scoreUI;
     private bool ShieldActive = false;
-    private Vector3 OuterCenter;
     private float AsteroidSpawnCDTimer = 0, VeloInc = 1.25f, PowerUpSpawnRate = 5.0f, Counter = 0, ShieldRotationSpeed = 0, x = 0;
     internal static float AsteroidSpawnRate = 3f, SpawnRateCap = 1.5f;
     internal static int Score;
@@ -21,7 +20,6 @@ public class AsteroidBehavoir : MonoBehaviour
     void Start()
     {
         InvokeRepeating("DifficultyAdd", 5.0f, 5.0f);
-        OuterCenter = OuterCol.bounds.center;
     }
 
     void Update()
@@ -34,6 +32,7 @@ public class AsteroidBehavoir : MonoBehaviour
             }
             scoreUI.GetComponent<Text>().text = "Score : " + Score; //display latest score val
             OuterRing.transform.RotateAround(OuterRing.GetComponent<Renderer>().bounds.center, -Vector3.forward, Time.deltaTime * 5);
+            InnerRing.transform.RotateAround(InnerRing.GetComponent<Renderer>().bounds.center, -Vector3.forward, Time.deltaTime * 25);
             SpawnAsteroid();
         }
     }
@@ -112,8 +111,8 @@ public class AsteroidBehavoir : MonoBehaviour
     {
         if (AsteroidSpawnRate > SpawnRateCap)
         {
-            AsteroidSpawnRate -= 0.05f; //shorter spawn gap
-            VeloInc += 0.025f; //spawn higher velo
+            AsteroidSpawnRate -= 0.035f; //shorter spawn gap
+            VeloInc += 0.035f; //spawn higher velo
         }
     }
    

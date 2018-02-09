@@ -11,6 +11,6 @@ public class Torque : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        GetComponent<Rigidbody>().AddTorque(new Vector3(Random.Range(-10000, 10000), Random.Range(-10000, 10000), Random.Range(-10000, 10000)));
+        GetComponent<Rigidbody>().AddTorque(new Vector3(Random.Range(-1000, 1000), Random.Range(-1000, 1000), Random.Range(-1000, 1000)));
 	}
 }
