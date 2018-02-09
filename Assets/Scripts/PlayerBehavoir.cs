@@ -65,7 +65,6 @@ public class PlayerBehavoir : MonoBehaviour
             {
                 AmmoRegenTimer += Time.deltaTime; //wait for regen to start
                 ShotCDTimer += Time.deltaTime; //shotspeed incrememnt
-                transform.GetChild(1).GetChild(0).GetChild(0).localScale = (Vector3.one/(OnLevel + 0.5f)) * (((Time.time - LevelTime))/ (50 * OnLevel) + OnLevel);
                 if ((Time.time - LevelTime) >= (50 * OnLevel) + OnLevel && PlayerHealth > 0) //Level Up
                 {
                     LevelUp();
@@ -478,7 +477,6 @@ public class PlayerBehavoir : MonoBehaviour
             {
                 AsteroidBehavoir.PowerUpSpawnRate += 0.15f;
             }
-            transform.GetChild(1).GetChild(0).GetChild(0).localScale = Vector3.one/10;
             AsteroidBehavoir.SpawnRateCap -= 0.01f;
             DoSplash(transform.position + Vector3.up, Color.red, "LevelUp");
             AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/LevelUp"), Music.transform.position, SaveLoad.fXVol);
