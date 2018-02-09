@@ -9,34 +9,19 @@ public class AsteroidBehavoir : MonoBehaviour
     [SerializeField]
     private GameObject AsteroidPrefab, PowerUpPrefab, ScoreName; //set in inspector
     [SerializeField]
-    private GameObject InnerRing, OuterRing, scoreUI;
+    private GameObject OuterRing, scoreUI;
     private bool ShieldActive = false;
     private Vector3 OuterCenter;
     private float AsteroidSpawnCDTimer = 0, VeloInc = 1.25f, PowerUpSpawnRate = 5.0f, Counter = 0, ShieldRotationSpeed = 0, x = 0;
     internal static float AsteroidSpawnRate = 3f, SpawnRateCap = 1.5f;
     internal static int Score;
-    internal static List<GameObject> AsteroidList = new List<GameObject>(), ShieldList = new List<GameObject>();
+    internal static List<GameObject> AsteroidList = new List<GameObject>();
 
+    float i = 0;
     void Start()
     {
         InvokeRepeating("DifficultyAdd", 5.0f, 5.0f);
-        ShieldList.Clear();
-        foreach (Transform Shield in transform)
-        {
-            if (Shield.tag == "Shield")
-            {
-                ShieldList.Add(Shield.gameObject);
-            }
-        }
         OuterCenter = OuterCol.bounds.center;
-        ShieldList[0].transform.position = new Vector3(OuterCenter.x + 2, OuterCenter.y, OuterCenter.z); //setting starting pos
-        ShieldList[1].transform.position = new Vector3(OuterCenter.x - 2, OuterCenter.y, OuterCenter.z);
-        ShieldList[2].transform.position = new Vector3(OuterCenter.x, OuterCenter.y + 2, OuterCenter.z);
-        ShieldList[3].transform.position = new Vector3(OuterCenter.x, OuterCenter.y - 2, OuterCenter.z);
-        foreach (GameObject Shield in ShieldList)
-        {
-            Shield.SetActive(false);
-        }
     }
 
     void Update()
@@ -48,74 +33,16 @@ public class AsteroidBehavoir : MonoBehaviour
                 Score++;
             }
             scoreUI.GetComponent<Text>().text = "Score : " + Score; //display latest score val
-            InnerRing.transform.RotateAround(InnerRing.GetComponent<Renderer>().bounds.center, Vector3.forward, Time.deltaTime * 5);
             OuterRing.transform.RotateAround(OuterRing.GetComponent<Renderer>().bounds.center, -Vector3.forward, Time.deltaTime * 5);
-            if (ShieldActive == true)
-            {
-                ShieldFunction();
-            }
             SpawnAsteroid();
         }
     }
-    private void ShieldFunction()
-    {
-        foreach (GameObject Shield in ShieldList)
-        {
-            Shield.SetActive(true);
-        }
-        if (x == 0)
-        {
-            InvokeRepeating("Count", 0.0f, 1.0f);
-            x++;
-        }
-        foreach (GameObject Shield in ShieldList)
-        {
-            Transform ShieldTrans = Shield.transform;
-            if (Counter < 2)
-            {
-                ShieldRotationSpeed += 2; //Acceleration
-                ShieldTrans.LookAt(OuterCenter);
-                ShieldTrans.RotateAround(OuterCenter, new Vector3(0, 0, 2.5f), ShieldRotationSpeed * Time.deltaTime);
-                if (Vector3.Distance(Shield.transform.position, OuterCenter) < 5)
-                {
-                    ShieldTrans.Translate(-Vector3.forward * Time.deltaTime); //move away from player OT if within 5 units
-                }
-            }
-            else if (Counter < 5)
-            {
-                ShieldTrans.LookAt(OuterCenter);
-                ShieldTrans.RotateAround(OuterCenter, new Vector3(0, 0, 2.5f), ShieldRotationSpeed * Time.deltaTime);
-            }
-            else if (Counter < 7)
-            {
-                if (!(ShieldRotationSpeed <= 0))
-                {
-                    ShieldRotationSpeed -= 2; //Decelleration
-                }
-                ShieldTrans.LookAt(OuterCenter);
-                ShieldTrans.RotateAround(OuterCenter, new Vector3(0, 0, 2.5f), ShieldRotationSpeed * Time.deltaTime);
-                if (Vector3.Distance(ShieldTrans.position, OuterCenter) > 2)
-                {
-                    ShieldTrans.Translate(Vector3.forward * Time.deltaTime); //move away from player OT if within 5 units
-                }
-            }
-        }
-        if (Counter > 6)
-        {
-            CancelInvoke("Count");
-            Counter = 0;
-            ShieldActive = false;
-            x = 0;
-            foreach (GameObject Shield in ShieldList)
-            {
-                Shield.SetActive(false);
-            }
-        }
-    }
+    
     private void SpawnAsteroid()
     {
         if (AsteroidSpawnCDTimer > AsteroidSpawnRate)
         {
+            i = Time.time;
             bool SpawnFailed = false;
             float a = Mathf.Sqrt(Random.Range(0.5f, 6.125f)), b = Random.Range(0.0f, 80.0f); //a velocity and size scale, b bytes, c spawn random, d spawn side pos/min variance
             Vector3 SpawnPosition = transform.position + (Vector3)Random.insideUnitCircle.normalized * 32;
@@ -145,7 +72,7 @@ public class AsteroidBehavoir : MonoBehaviour
                 Asteroid.transform.localScale = Vector3.one * a / 100; //size scaled betw a rand
                 AstRB.mass = 115 * a;
                 Vector3 direction = ((transform.position + (Vector3)Random.insideUnitCircle.normalized * Random.Range(0, 18)) - SpawnPosition);
-                float magnitude = ((VeloInc / (Mathf.Sqrt(a) * AstRB.mass)) * (VeloInc * (Random.Range(6.5f, 9.5f))));
+                float magnitude = ((VeloInc* 2 / (Mathf.Sqrt(a) * (AstRB.mass*3))) * (VeloInc * (Random.Range(6.5f, 9.5f))));
                 AstRB.velocity = direction * magnitude;
                 byte[] mybyte = System.BitConverter.GetBytes(b); //color variance via bits from rand float
                 while (mybyte[1] < 20 || mybyte[1] > 50) //is too dark or too light? reroll
@@ -178,7 +105,7 @@ public class AsteroidBehavoir : MonoBehaviour
         }
         else
         {
-            AsteroidSpawnCDTimer += (Random.Range(0.0f, 3.0f) * Time.deltaTime); //asteroids spawn timer variance
+            AsteroidSpawnCDTimer += (Random.Range(1.0f, 5.0f) * Time.deltaTime); //asteroids spawn timer variance
         }
     }
     private void DifficultyAdd()
@@ -186,20 +113,10 @@ public class AsteroidBehavoir : MonoBehaviour
         if (AsteroidSpawnRate > SpawnRateCap)
         {
             AsteroidSpawnRate -= 0.05f; //shorter spawn gap
-            VeloInc += 0.02f; //spawn higher velo
+            VeloInc += 0.025f; //spawn higher velo
         }
     }
-    private void Count()
-    {
-        if(Counter == 0 && ShieldList[0].activeSelf == true)
-        {
-            ShieldList[0].transform.position = new Vector3(OuterCenter.x + 2, OuterCenter.y, OuterCenter.z); //setting starting pos
-            ShieldList[1].transform.position = new Vector3(OuterCenter.x - 2, OuterCenter.y, OuterCenter.z);
-            ShieldList[2].transform.position = new Vector3(OuterCenter.x, OuterCenter.y + 2, OuterCenter.z);
-            ShieldList[3].transform.position = new Vector3(OuterCenter.x, OuterCenter.y - 2, OuterCenter.z);
-        }
-        Counter++;
-    }
+   
     public void SetShieldBool(bool tf)
     {
         ShieldActive = tf;

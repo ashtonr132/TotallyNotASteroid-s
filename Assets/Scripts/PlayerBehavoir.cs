@@ -4,11 +4,14 @@ using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System.Linq;
+using UnityEngine.PostProcessing;
 
 public class PlayerBehavoir : MonoBehaviour
 {
     [SerializeField]
     private GameObject EndUI, Score, Barrel, InstructionsUI, GameStartText, AmmoBar, HealthBar, Music, ExitGameButton, PauseScreen, MusicVolSlider, SFXVolSlider, Tips, Level, BulletPrefab, ScoreName;
+    [SerializeField]
+    PostProcessingProfile ppb;
     private float BulletSize = 1, BulletMass = 2, ShotSpeed = 0.125f, BulletVelocityModifier = 0.75f, ShotCDTimer = 0, AmmoRegenTimer = 0, MaxAmmo = 27, AmmoCount, BarrelMoveSpeed = 150, AmmoWait = 0.5f;
     private bool InvincibilityFrames = false, TripleShot = false;
     private static int OnLevel = 1, MaxHP = 5, AmmoCap = 45;
@@ -56,6 +59,9 @@ public class PlayerBehavoir : MonoBehaviour
             }
             if (Time.timeScale != 0) //game isnt paused
             {
+                var ppp = ppb.colorGrading.settings;
+                ppp.basic.hueShift += 0.1f;
+                ppb.colorGrading.settings = ppp;
                 AmmoRegenTimer += Time.deltaTime; //wait for regen to start
                 ShotCDTimer += Time.deltaTime; //shotspeed incrememnt
                 if ((Time.time - LevelTime) >= (100 * OnLevel) + OnLevel && PlayerHealth > 0) //Level Up
@@ -158,7 +164,7 @@ public class PlayerBehavoir : MonoBehaviour
     }
     void OnCollisionEnter(Collision col)
     {
-        if (col.gameObject.tag == "Asteroid" && InvincibilityFrames == false) //if player is hit
+        if (col.gameObject.tag == "Asteroid" && InvincibilityFrames == false && PlayerHealth >= 0) //if player is hit
         {
             PlayerHealth--;
             AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/Hit"), Music.transform.position, SaveLoad.fXVol);
@@ -446,21 +452,28 @@ public class PlayerBehavoir : MonoBehaviour
     }
     internal void LevelUp()
     {
-        AsteroidBehavoir.SpawnRateCap -= 0.01f;
-        DoSplash(transform.position + Vector3.up, Color.red, "LevelUp");
-        AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/LevelUp"), Music.transform.position, SaveLoad.fXVol);
-        foreach (GameObject asteroid in AsteroidBehavoir.AsteroidList)
+        if (PlayerHealth <= 0)
         {
-            asteroid.GetComponent<Rigidbody>().velocity = (asteroid.transform.position - transform.position).normalized * 10;
+            AsteroidBehavoir.SpawnRateCap -= 0.01f;
+            DoSplash(transform.position + Vector3.up, Color.red, "LevelUp");
+            AudioSource.PlayClipAtPoint((AudioClip)Resources.Load("Sound Effects/LevelUp"), Music.transform.position, SaveLoad.fXVol);
+            foreach (GameObject asteroid in AsteroidBehavoir.AsteroidList)
+            {
+                if (asteroid != null)
+                {
+                    asteroid.GetComponent<Rigidbody>().velocity = (asteroid.transform.position - transform.position).normalized * 10;
+
+                }
+            }
+            AsteroidBehavoir.Score = (int)Mathf.Round(Time.time - LevelTime);
+            OnLevel++;
+            if (AsteroidBehavoir.SpawnRateCap > 0.5f)
+            {
+                AsteroidBehavoir.SpawnRateCap = -0.25f;
+            }
+            AsteroidBehavoir.AsteroidSpawnRate = 3.5f;
+            Level.GetComponent<Text>().text = "Level " + OnLevel;
         }
-        AsteroidBehavoir.Score = (int)Mathf.Round(Time.time - LevelTime);
-        OnLevel++;
-        if (AsteroidBehavoir.SpawnRateCap > 0.5f)
-        {
-            AsteroidBehavoir.SpawnRateCap =- 0.25f;
-        }
-        AsteroidBehavoir.AsteroidSpawnRate = 3.5f;
-        Level.GetComponent<Text>().text = "Level " + OnLevel;
     }
     internal void IsInput(InputField IF)
     {

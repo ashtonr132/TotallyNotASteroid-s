@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2017
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TotallyNotASteroid-s", "TotallyNotASteroid-s.csproj", "{AA5C4C10-18C1-6279-D40D-1AF7A7486AFF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TotallyNotASteroid-s.Editor", "TotallyNotASteroid-s.Editor.csproj", "{338DE5B9-D226-C1C6-65D4-9B172BEB8418}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -13,6 +15,10 @@ Global
 		{AA5C4C10-18C1-6279-D40D-1AF7A7486AFF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AA5C4C10-18C1-6279-D40D-1AF7A7486AFF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AA5C4C10-18C1-6279-D40D-1AF7A7486AFF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{338DE5B9-D226-C1C6-65D4-9B172BEB8418}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{338DE5B9-D226-C1C6-65D4-9B172BEB8418}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{338DE5B9-D226-C1C6-65D4-9B172BEB8418}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{338DE5B9-D226-C1C6-65D4-9B172BEB8418}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
