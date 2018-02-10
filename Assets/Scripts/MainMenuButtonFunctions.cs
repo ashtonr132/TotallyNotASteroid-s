@@ -99,8 +99,10 @@ public class MainMenuButtonFunctions : MonoBehaviour {
                                     + "8-Bit Sound Effect Pack Vol001, 'Xenocity'" + System.Environment.NewLine + System.Environment.NewLine
                                     + "Art;" + System.Environment.NewLine
                                     + "Asteroids, 'Sumbada'" + System.Environment.NewLine
-                                    + "HorseHead Nebula, 'HDSpaceWallpapers4305'" + System.Environment.NewLine + System.Environment.NewLine
-                                    + "VFX;" + System.Environment.NewLine
+                                    + "HorseHead Nebula, 'HDSpaceWallpapers4305'" + System.Environment.NewLine
+                                    + "SpaceShip Model; " + System.Environment.NewLine
+                                    + "Jay Cole" + System.Environment.NewLine
+                                    + "VFX;" + System.Environment.NewLine + System.Environment.NewLine
                                     + "Particle Systems/Magic, 'UETools'" + System.Environment.NewLine + System.Environment.NewLine
                                     + "Post Processing Stack;" + System.Environment.NewLine
                                     + "Unity Essentials, 'Unity Technologies'" + System.Environment.NewLine + System.Environment.NewLine
