@@ -389,7 +389,7 @@ public class PlayerBehavoir : MonoBehaviour
             if (TripleShot == true)
             {
                 Vector3 FirePoint = Barrel.transform.position + -Barrel.transform.right * 4 -Barrel.transform.forward * 2, FirePoint2 = Barrel.transform.position + -Barrel.transform.right * 4 + Barrel.transform.forward *2; //pos L&R of normal shooting, world space to local space
-                GameObject BulletL = (GameObject)Instantiate(BulletPrefab, FirePoint, Barrel.transform.rotation), BulletR = (GameObject)Instantiate(BulletPrefab, FirePoint2, Barrel.transform.rotation); //inst L&R bullets
+                GameObject BulletL = (GameObject)Instantiate(BulletPrefab, FirePoint, Barrel.transform.rotation * Quaternion.Euler(90, 0, 0)), BulletR = (GameObject)Instantiate(BulletPrefab, FirePoint2, Barrel.transform.rotation * Quaternion.Euler(90, 0, 0)); //inst L&R bullets
                 BulletCharacteristics(BulletL);
                 BulletCharacteristics(BulletR);
             }
